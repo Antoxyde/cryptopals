@@ -1,7 +1,7 @@
-pub mod utils;
+pub mod set01;
 
-use utils::hex::hex_to_bytes;
-use utils::base64::base64_encode;
+use set01::hex::hex_to_bytes;
+use set01::base64::base64_encode;
 
 fn main() {
     let hexstring = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";

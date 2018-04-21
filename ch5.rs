@@ -7,10 +7,10 @@ Juste a simple key-repeating xor.
 
 */
 
-pub mod utils;
+pub mod set01;
 
-use utils::hex::bytes_to_hex;
-use utils::xor::key_cycling_xor;
+use set01::hex::bytes_to_hex;
+use set01::xor::key_cycling_xor;
 
 fn main() {
     let plain =

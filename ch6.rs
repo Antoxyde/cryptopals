@@ -2,13 +2,13 @@
 Cryptoptals stage 1 challenge 6 solution
 https://www.cryptopals.com/sets/1/challenges/6
 */
-pub mod utils;
+pub mod set01;
 
 use std::fs::File;
 use std::io::prelude::*;
 
-use utils::base64::base64_decode;
-use utils::others::{hamming_distance, m_split};
+use set01::base64::base64_decode;
+use set01::others::{hamming_distance, m_split};
 fn main() {
     assert_eq!(
         hamming_distance("this is a test".to_string(), "wokka wokka!!!".to_string()),

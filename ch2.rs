@@ -1,7 +1,7 @@
-pub mod utils;
+pub mod set01;
 
-use utils::hex::{bytes_to_hex, hex_to_bytes};
-use utils::crypto::fixed_xor;
+use set01::hex::{bytes_to_hex, hex_to_bytes};
+use set01::xor::fixed_xor;
 
 fn main() {
     let s1 = hex_to_bytes("1c0111001f010100061a024b53535009181c");

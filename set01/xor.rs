@@ -1,4 +1,4 @@
-use utils::others::count_letter_and_spaces;
+use set01::others::count_letter_and_spaces;
 
 pub fn fixed_xor(s1: Vec<u8>, s2: Vec<u8>) -> Vec<u8> {
     assert_eq!(s1.len(), s2.len());
