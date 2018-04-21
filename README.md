@@ -6,7 +6,7 @@
 - [x] 02. Fixed XOR
 - [x] 03. Single-byte XOR cipher
 - [x] 04. Detect single-character XOR
-- [ ] 05. Implement repeating-key XOR
+- [x] 05. Implement repeating-key XOR
 - [ ] 06. Break repeating-key XOR
 - [ ] 07. AES in ECB mode
 - [ ] 08. Detect AES in ECB mode

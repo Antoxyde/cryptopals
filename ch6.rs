@@ -9,6 +9,8 @@ use std::io::prelude::*;
 
 use set01::base64::base64_decode;
 use set01::others::{hamming_distance, m_split};
+use set01::xor::{crack_xor_key, key_cycling_xor};
+
 fn main() {
     assert_eq!(
         hamming_distance("this is a test".to_string(), "wokka wokka!!!".to_string()),
@@ -25,35 +27,53 @@ fn main() {
     let mut keysize_guess: Vec<(i32, i32)> = Vec::new();
 
     for guess in 2..40 as usize {
-        let average_hamming_distance = (hamming_distance(
-            content.get(0..guess).unwrap().to_string(),
-            content.get(guess..2 * guess).unwrap().to_string(),
-        )
-            + hamming_distance(
-                content.get(2 * guess..3 * guess).unwrap().to_string(),
-                content.get(3 * guess..4 * guess).unwrap().to_string(),
-            )) / (2 * guess as i32);
-        keysize_guess.push((guess as i32, average_hamming_distance));
-    }
-
-    keysize_guess.sort_by(|a, b| a.1.cmp(&b.1)); //Sort by lower hamming distance
-    let possible_keysize: Vec<i32> = keysize_guess.iter().map(|a| a.0).take(5).collect(); //Take the five lowest ones
-
-    println!("[*]Five most probables keysizes are {:?}", possible_keysize);
-
-    let mut zipped: Vec<String> = Vec::new();
-    for ks in possible_keysize {
-        let m = m_split(&content, ks as usize);
-        for x in 0..ks {
-            for y in 0..m.len() {
-                if m[y as usize].len() == ks as usize {
-                    zipped[x as usize].push(m[y as usize].chars().nth(x as usize).unwrap());
+        //Could be optimized ? it takes several seconds ..
+        let splitted = m_split(&content, guess); //make blocks of guess size;
+        let mut counter = 0;
+        let mut hd = 0;
+        for x in &splitted {
+            // loop over thoses blocks and compute their hamming distance
+            for y in &splitted {
+                if x != y {
+                    //compute the hamming distance of the same blocks would be idiot ?
+                    hd += hamming_distance(x.to_string(), y.to_string());
+                    counter += 1;
                 }
             }
         }
+
+        keysize_guess.push((guess as i32, (hd / counter) / guess as i32));
     }
 
-    println!("{:?}", zipped);
+    keysize_guess.sort_by(|a, b| a.1.cmp(&b.1)); //Sort by lower hamming distance
+    let keysize: i32 = keysize_guess[0].0; //Take the lowest one
 
-    //println!("{}", content);
+    let mut zipped: Vec<String> = Vec::new();
+
+    for _ in 0..keysize {
+        //init a vector of string
+        zipped.push(String::new());
+    }
+
+    for (c, item) in content.chars().enumerate() {
+        //zip our strings between themselves
+        zipped[c % keysize as usize].push(item);
+    }
+
+    let mut key: Vec<u8> = Vec::new();
+
+    for z in zipped {
+        //crack each zip one by one (which correspond to each key char)
+        key.push(crack_xor_key(z.into_bytes()).unwrap())
+    }
+
+    let u_content = content.clone().into_bytes();
+
+    let plaintext = String::from_utf8(key_cycling_xor(&u_content, &key)).unwrap(); //Decrypt the content with the key we jsut found
+
+    println!(
+        "The key is : \"{}\" and the plaintext is  : \n{}.",
+        String::from_utf8(key).unwrap(),
+        plaintext
+    );
 }

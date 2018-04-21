@@ -34,6 +34,19 @@ pub fn crack_xor(bytes_ct: Vec<u8>) -> Option<String> {
     None
 }
 
+pub fn crack_xor_key(bytes_ct: Vec<u8>) -> Option<u8> {
+    for i in 0..127 {
+        let res = single_byte_xor(&bytes_ct, i);
+
+        let ratio = count_letter_and_spaces(&res);
+        if ratio > 0.80 {
+            return Some(i as u8);
+        }
+    }
+
+    None
+}
+
 pub fn key_cycling_xor(plain: &[u8], key: &[u8]) -> Vec<u8> {
     let mut result: Vec<u8> = Vec::new();
     for i in 0..plain.len() {
