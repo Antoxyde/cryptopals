@@ -1,3 +1,14 @@
+/*
+Cryptoptals stage 1 challenge 2 solution
+https://www.cryptopals.com/sets/1/challenges/2
+
+Output :
+
+[antoxyde@anarchy-fixe:Projets/Cryptopals]$ rustc ch2.rs
+[antoxyde@anarchy-fixe:Projets/Cryptopals]$ ./ch2
+746865206b696420646f6e277420706c6179
+
+*/
 pub mod set01;
 
 use set01::hex::{bytes_to_hex, hex_to_bytes};
