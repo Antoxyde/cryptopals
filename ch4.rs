@@ -19,10 +19,10 @@ Now that the party is jumping
 
 */
 
-pub mod set01;
+pub mod include;
 
-use set01::hex::hex_to_bytes;
-use set01::xor::crack_xor;
+use include::hex::hex_to_bytes;
+use include::xor::crack_xor;
 
 use std::fs::File;
 use std::io::prelude::*;

@@ -96,14 +96,14 @@ Play that funky music
 n.
 
 */
-pub mod set01;
+pub mod include;
 
 use std::fs::File;
 use std::io::prelude::*;
 
-use set01::base64::base64_decode;
-use set01::others::{hamming_distance, m_split};
-use set01::xor::{crack_xor_key, key_cycling_xor};
+use include::base64::base64_decode;
+use include::others::{hamming_distance, m_split};
+use include::xor::{crack_xor_key, key_cycling_xor};
 
 fn main() {
     assert_eq!(

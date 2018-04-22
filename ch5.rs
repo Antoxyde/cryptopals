@@ -11,10 +11,10 @@ Output :
 
 */
 
-pub mod set01;
+pub mod include;
 
-use set01::hex::bytes_to_hex;
-use set01::xor::key_cycling_xor;
+use include::hex::bytes_to_hex;
+use include::xor::key_cycling_xor;
 
 fn main() {
     let plain =

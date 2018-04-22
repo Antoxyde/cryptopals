@@ -11,10 +11,10 @@ Cooking MC's like a pound of bacon
 
 */
 
-pub mod set01;
+pub mod include;
 
-use set01::xor::crack_xor;
-use set01::hex::hex_to_bytes;
+use include::xor::crack_xor;
+use include::hex::hex_to_bytes;
 
 fn main() {
     let s = hex_to_bytes("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
