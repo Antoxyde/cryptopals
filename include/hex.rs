@@ -17,3 +17,12 @@ pub fn bytes_to_hex(bytes: Vec<u8>) -> String {
     }
     hexstring
 }
+
+pub fn print_state_hex(state: &[u8; 16]) {
+    for i in 0..4 {
+        for j in 0..4 {
+            print!("{:x} ", state[4 * j + i]);
+        }
+        println!("");
+    }
+}
