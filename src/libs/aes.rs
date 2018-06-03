@@ -1,4 +1,4 @@
-use include::hex::print_state_hex;
+use libs::hex::print_state_hex;
 //https://csrc.nist.gov/csrc/media/publications/fips/197/final/documents/fips-197.pdf
 
 //probably the most unoptimized implementation of aes you've ever seen, but it was a great way to understand (a bit) of aes's internals
@@ -127,6 +127,8 @@ fn gf256_poly_add(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
     return c;
 }
 
+
+/*
 fn gf256_poly_mul(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
     let mut d = [0u8; 4];
     d[0] = gf256_mul(a[0], b[0]) ^ gf256_mul(a[3], b[1]) ^ gf256_mul(a[2], b[2])
@@ -142,6 +144,8 @@ fn gf256_poly_mul(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
         ^ gf256_mul(a[0], b[3]);
     return d;
 }
+*/
+
 
 //Place the first index at the end (aka cyclic permutation)
 fn rot_word(w: &mut [u8; 4]) {
