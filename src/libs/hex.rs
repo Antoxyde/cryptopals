@@ -25,4 +25,5 @@ pub fn print_state_hex(state: &[u8; 16]) {
         }
         println!("");
     }
+    println!("");
 }

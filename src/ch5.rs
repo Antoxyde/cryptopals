@@ -17,7 +17,7 @@ mod test {
     use libs::xor::key_cycling_xor;
 
     #[test]
-    fn test_ch5() {
+    fn ch5() {
         let plain = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".as_bytes();
         let key = "ICE".as_bytes();
         let result = bytes_to_hex(key_cycling_xor(&plain, &key));

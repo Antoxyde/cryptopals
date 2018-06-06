@@ -15,24 +15,14 @@ mod test {
     use libs::xor::{crack_xor_key, key_cycling_xor};
 
     #[test]
-    fn test_ch6() {
+    fn ch6() {
 
         assert_eq!(hamming_distance("this is a test".to_string(), "wokka wokka!!!".to_string()), 37);
 
-        let file = File::open("resources/6.txt");
+        let mut file = File::open("resources/6.txt").expect("File 6.txt not found.");
         let mut encoded_content = String::new();
 
-        match file {
-            Ok(mut f) => {
-                match f.read_to_string(&mut encoded_content) {
-                    Ok(x) => x,
-                    Err(e) => panic!(e),
-                }
-            },
-            Err(e) => {
-                panic!(e);
-            }
-        };
+        file.read_to_string(&mut encoded_content).expect("Error while reading 6.txt");
 
         let content: String =
             String::from_utf8(base64_decode(encoded_content.replace("\n", ""))).unwrap();

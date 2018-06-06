@@ -14,7 +14,7 @@ mod test {
 
 
     #[test]
-    fn test_ch1() {
+    fn ch1() {
         let hexstring = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         let s = base64_encode(hex_to_bytes(hexstring));
 

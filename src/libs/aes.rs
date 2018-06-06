@@ -91,346 +91,352 @@ const RCON: [u8; 256] = [
     0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d,
 ];
 
-//https://en.wikipedia.org/wiki/Finite_field_arithmetic#Rijndael's_finite_field
-//Peasant's algorithm
-//modulo used is x8 + x4 + x3 + x + 1
-fn gf256_mul(mut a: u8, mut b: u8) -> u8 {
-    let mut p: u8 = 0;
-    let mut carry: u8;
-
-    for _ in 0..8 {
-        if a == 0 || b == 0 {
-            break;
-        }
-
-        if b & 1 == 1 {
-            p ^= a;
-        }
-
-        b >>= 1;
-        carry = a & 128;
-
-        a <<= 1;
-        if carry == 128 {
-            a ^= 0x1b;
-        }
-    }
-    return p;
+pub struct AES {
+    key: Vec<u8>,
+    nr: u8,
 }
 
-fn gf256_poly_add(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
-    let mut c = [0u8; 4];
-    c[0] = a[0] ^ b[0];
-    c[1] = a[1] ^ b[1];
-    c[2] = a[2] ^ b[2];
-    c[3] = a[3] ^ b[3];
-    return c;
-}
+impl AES {
+    //https://en.wikipedia.org/wiki/Finite_field_arithmetic#Rijndael's_finite_field
+    //Peasant's algorithm
+    //modulo used is x8 + x4 + x3 + x + 1
 
+    fn gf256_mul(mut a: u8, mut b: u8) -> u8 {
+        let mut p: u8 = 0;
+        let mut carry: u8;
 
-/*
-fn gf256_poly_mul(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
-    let mut d = [0u8; 4];
-    d[0] = gf256_mul(a[0], b[0]) ^ gf256_mul(a[3], b[1]) ^ gf256_mul(a[2], b[2])
-        ^ gf256_mul(a[1], b[3]);
-
-    d[1] = gf256_mul(a[1], b[0]) ^ gf256_mul(a[0], b[1]) ^ gf256_mul(a[3], b[2])
-        ^ gf256_mul(a[2], b[3]);
-
-    d[2] = gf256_mul(a[2], b[0]) ^ gf256_mul(a[1], b[1]) ^ gf256_mul(a[0], b[2])
-        ^ gf256_mul(a[3], b[3]);
-
-    d[3] = gf256_mul(a[3], b[0]) ^ gf256_mul(a[2], b[1]) ^ gf256_mul(a[1], b[2])
-        ^ gf256_mul(a[0], b[3]);
-    return d;
-}
-*/
-
-
-//Place the first index at the end (aka cyclic permutation)
-fn rot_word(w: &mut [u8; 4]) {
-    let t = w[0];
-    w[0] = w[1];
-    w[1] = w[2];
-    w[2] = w[3];
-    w[3] = t;
-}
-
-fn sub_word(w: &mut [u8; 4]) {
-    for i in 0..4 {
-        w[i] = S_BOX[w[i] as usize];
-    }
-}
-
-fn sub_bytes(state: &mut [u8; 16]) {
-    for i in 0..4 {
-        for j in 0..NB {
-            state[(NB * i + j) as usize] = S_BOX[state[(NB * i + j) as usize] as usize];
-        }
-    }
-}
-
-fn inv_sub_bytes(state: &mut [u8; 16]) {
-    for i in 0..4 {
-        for j in 0..NB {
-            state[(NB * i + j) as usize] = INV_S_BOX[state[(NB * i + j) as usize] as usize];
-        }
-    }
-}
-
-fn add_round_key(state: &mut [u8; 16], key: &mut Vec<u8>, r: u8) {
-    for i in 0..4 {
-        for j in 0..NB {
-            state[(NB * j + i) as usize] ^= key[(4 * NB * r + NB * i + j) as usize];
-        }
-    }
-}
-
-//https://en.wikipedia.org/wiki/Rijndael_key_schedule
-//http://www.samiam.org/key-schedule.html
-fn key_expansion(k: &Vec<u8>, nk: u8, nr: u8) -> Vec<u8> {
-    let mut tmp: [u8; 4] = [0, 0, 0, 0];
-
-    let len = NB * (nr + 1);
-    let mut w: Vec<u8> = Vec::new();
-
-    //init the vector
-    for _ in 0..len * 4 {
-        w.push(0);
-    }
-
-    for i in 0..nk {
-        w[(4 * i + 0) as usize] = k[(4 * i + 0) as usize];
-        w[(4 * i + 1) as usize] = k[(4 * i + 1) as usize];
-        w[(4 * i + 2) as usize] = k[(4 * i + 2) as usize];
-        w[(4 * i + 3) as usize] = k[(4 * i + 3) as usize];
-    }
-
-    for i in nk..len {
-        tmp[0] = w[(4 * (i - 1) + 0) as usize];
-        tmp[1] = w[(4 * (i - 1) + 1) as usize];
-        tmp[2] = w[(4 * (i - 1) + 2) as usize];
-        tmp[3] = w[(4 * (i - 1) + 3) as usize];
-
-        if i % nk == 0 {
-            rot_word(&mut tmp);
-            sub_word(&mut tmp);
-            let tr = [RCON[(i / nk) as usize], 0, 0, 0];
-            tmp = gf256_poly_add(&tmp, &tr);
-        } else if nk > 6 && i % nk == 4 {
-            sub_word(&mut tmp);
-        }
-
-        w[(4 * i + 0) as usize] = w[(4 * (i - nk) + 0) as usize] ^ tmp[0];
-        w[(4 * i + 1) as usize] = w[(4 * (i - nk) + 1) as usize] ^ tmp[1];
-        w[(4 * i + 2) as usize] = w[(4 * (i - nk) + 2) as usize] ^ tmp[2];
-        w[(4 * i + 3) as usize] = w[(4 * (i - nk) + 3) as usize] ^ tmp[3];
-    }
-
-    return w;
-}
-
-fn shift_rows(state: &mut [u8; 16]) {
-    let mut tmp: u8;
-    let mut s: u8;
-
-    for i in 1..4 {
-        s = 0;
-        while s < i {
-            tmp = state[(NB * i) as usize];
-            for k in 1..NB {
-                state[(NB * i + k - 1) as usize] = state[(NB * i + k) as usize];
+        for _ in 0..8 {
+            if a == 0 || b == 0 {
+                break;
             }
-            state[(NB * i + NB - 1) as usize] = tmp;
-            s += 1;
+
+            if b & 1 == 1 {
+                p ^= a;
+            }
+
+            b >>= 1;
+            carry = a & 128;
+
+            a <<= 1;
+            if carry == 128 {
+                a ^= 0x1b;
+            }
+        }
+        return p;
+    }
+
+    fn gf256_poly_add(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
+        let mut c = [0u8; 4];
+        c[0] = a[0] ^ b[0];
+        c[1] = a[1] ^ b[1];
+        c[2] = a[2] ^ b[2];
+        c[3] = a[3] ^ b[3];
+        return c;
+    }
+
+    #[allow(dead_code)]
+    fn gf256_poly_mul(a: &[u8; 4], b: &[u8; 4]) -> [u8; 4] {
+        let mut d = [0u8; 4];
+        d[0] = AES::gf256_mul(a[0], b[0]) ^ AES::gf256_mul(a[3], b[1]) ^ AES::gf256_mul(a[2], b[2])
+            ^ AES::gf256_mul(a[1], b[3]);
+
+        d[1] = AES::gf256_mul(a[1], b[0]) ^ AES::gf256_mul(a[0], b[1]) ^ AES::gf256_mul(a[3], b[2])
+            ^ AES::gf256_mul(a[2], b[3]);
+
+        d[2] = AES::gf256_mul(a[2], b[0]) ^ AES::gf256_mul(a[1], b[1]) ^ AES::gf256_mul(a[0], b[2])
+            ^ AES::gf256_mul(a[3], b[3]);
+
+        d[3] = AES::gf256_mul(a[3], b[0]) ^ AES::gf256_mul(a[2], b[1]) ^ AES::gf256_mul(a[1], b[2])
+            ^ AES::gf256_mul(a[0], b[3]);
+        return d;
+    }
+
+
+    //Place the first index at the end (aka cyclic permutation)
+    fn rot_word(w: &mut [u8; 4]) {
+        let t = w[0];
+        w[0] = w[1];
+        w[1] = w[2];
+        w[2] = w[3];
+        w[3] = t;
+    }
+
+    fn sub_word(w: &mut [u8; 4]) {
+        for i in 0..4 {
+            w[i] = S_BOX[w[i] as usize];
         }
     }
-}
 
-fn mix_columns(state: &mut [u8; 16]) {
-    for i in 0..4 {
-        let b0 = state[4 * i + 0];
-        let b1 = state[4 * i + 1];
-        let b2 = state[4 * i + 2];
-        let b3 = state[4 * i + 3];
-
-        state[4 * i + 0] = gf256_mul(2, b0) ^ gf256_mul(3, b1) ^ b2 ^ b3;
-        state[4 * i + 1] = b0 ^ gf256_mul(2, b1) ^ gf256_mul(3, b2) ^ b3;
-        state[4 * i + 2] = b0 ^ b1 ^ gf256_mul(2, b2) ^ gf256_mul(3, b3);
-        state[4 * i + 3] = gf256_mul(3, b0) ^ b1 ^ b2 ^ gf256_mul(2, b3);
+    fn sub_bytes(state: &mut [u8; 16]) {
+        for i in 0..4 {
+            for j in 0..NB {
+                state[(NB * i + j) as usize] = S_BOX[state[(NB * i + j) as usize] as usize];
+            }
+        }
     }
-}
 
-fn cipher(mut state: &mut [u8; 16], key: &mut Vec<u8>, nr: u8) {
-    println!("[debug] start of round");
-    print_state_hex(&state);
-    add_round_key(&mut state, key, 0);
-    println!("[debug] after 1st round key");
-    print_state_hex(&state);
-
-    for r in 0..nr {
-        println!("[debug] start of {} round", r);
-        print_state_hex(&state);
-        sub_bytes(&mut state);
-        println!("[debug] after sub_bytes");
-        print_state_hex(&state);
-        shift_rows(&mut state);
-        println!("[debug] after shift_rows");
-        print_state_hex(&state);
-        mix_columns(&mut state);
-        println!("[debug] after mix_columns");
-        print_state_hex(&state);
-        add_round_key(&mut state, key, r);
-        println!("[debug] after add_round_key");
-        print_state_hex(&state);
+    #[allow(dead_code)]
+    fn inv_sub_bytes(state: &mut [u8; 16]) {
+        for i in 0..4 {
+            for j in 0..NB {
+                state[(NB * i + j) as usize] = INV_S_BOX[state[(NB * i + j) as usize] as usize];
+            }
+        }
     }
-    println!("[debug] End of loop");
-    print_state_hex(&state);
-    sub_bytes(&mut state);
-    println!("[debug] after sub_bytes");
-    print_state_hex(&state);
-    shift_rows(&mut state);
-    println!("[debug] after shift_rows");
-    print_state_hex(&state);
 
-    add_round_key(&mut state, key, nr);
-    println!("[debug] after add_round_key");
-    print_state_hex(&state);
+    fn add_round_key(key: &Vec<u8>, state: &mut [u8; 16], r: u8) {
+        for i in 0..4 {
+            for j in 0..NB {
+                state[(NB * j + i) as usize] ^= key[(4 * NB * r + NB * i + j) as usize];
+            }
+        }
+    }
+
+    fn shift_rows(state: &mut [u8; 16]) {
+        let mut tmp: u8;
+        let mut s: u8;
+
+        for i in 1..4 {
+            s = 0;
+            while s < i {
+                tmp = state[(NB * i) as usize];
+                for k in 1..NB {
+                    state[(NB * i + k - 1) as usize] = state[(NB * i + k) as usize];
+                }
+                state[(NB * i + NB - 1) as usize] = tmp;
+                s += 1;
+            }
+        }
+    }
+
+    fn mix_columns(state: &mut [u8; 16]) {
+        for i in 0..4 {
+            let b0 = state[4 * i + 0];
+            let b1 = state[4 * i + 1];
+            let b2 = state[4 * i + 2];
+            let b3 = state[4 * i + 3];
+
+            state[4 * i + 0] = AES::gf256_mul(2, b0) ^ AES::gf256_mul(3, b1) ^ b2 ^ b3;
+            state[4 * i + 1] = b0 ^ AES::gf256_mul(2, b1) ^ AES::gf256_mul(3, b2) ^ b3;
+            state[4 * i + 2] = b0 ^ b1 ^ AES::gf256_mul(2, b2) ^ AES::gf256_mul(3, b3);
+            state[4 * i + 3] = AES::gf256_mul(3, b0) ^ b1 ^ b2 ^ AES::gf256_mul(2, b3);
+        }
+    }
+
+
+        //https://en.wikipedia.org/wiki/Rijndael_key_schedule
+        //http://www.samiam.org/key-schedule.html
+        fn key_expansion(k: &Vec<u8>, nk: u8, nr: u8) -> Vec<u8> {
+            let mut tmp: [u8; 4] = [0, 0, 0, 0];
+
+            let len = NB * (nr + 1);
+            let mut w: Vec<u8> = Vec::new();
+
+            //init the vector
+            for _ in 0..len * 4 {
+                w.push(0);
+            }
+
+            for i in 0..nk {
+                w[(4 * i + 0) as usize] = k[(4 * i + 0) as usize];
+                w[(4 * i + 1) as usize] = k[(4 * i + 1) as usize];
+                w[(4 * i + 2) as usize] = k[(4 * i + 2) as usize];
+                w[(4 * i + 3) as usize] = k[(4 * i + 3) as usize];
+            }
+
+            for i in nk..len {
+                tmp[0] = w[(4 * (i - 1) + 0) as usize];
+                tmp[1] = w[(4 * (i - 1) + 1) as usize];
+                tmp[2] = w[(4 * (i - 1) + 2) as usize];
+                tmp[3] = w[(4 * (i - 1) + 3) as usize];
+
+                if i % nk == 0 {
+                    AES::rot_word(&mut tmp);
+                    AES::sub_word(&mut tmp);
+                    let tr = [RCON[(i / nk) as usize], 0, 0, 0];
+                    tmp = AES::gf256_poly_add(&tmp, &tr);
+                } else if nk > 6 && i % nk == 4 {
+                    AES::sub_word(&mut tmp);
+                }
+
+                w[(4 * i + 0) as usize] = w[(4 * (i - nk) + 0) as usize] ^ tmp[0];
+                w[(4 * i + 1) as usize] = w[(4 * (i - nk) + 1) as usize] ^ tmp[1];
+                w[(4 * i + 2) as usize] = w[(4 * (i - nk) + 2) as usize] ^ tmp[2];
+                w[(4 * i + 3) as usize] = w[(4 * (i - nk) + 3) as usize] ^ tmp[3];
+            }
+
+            return w;
+        }
+
+    fn cipher(&mut self, state: &mut [u8; 16]) {
+        let nr = self.nr;
+        print_state_hex(state);
+        AES::add_round_key(&self.key, state, 0);
+        print_state_hex(state);
+        for r in 1..nr {
+            AES::sub_bytes(state);
+            print_state_hex(state);
+            AES::shift_rows(state);
+            print_state_hex(state);
+            AES::mix_columns(state);
+            print_state_hex(state);
+            AES::add_round_key(&self.key, state, r);
+            print_state_hex(state);
+        }
+
+        AES::sub_bytes(state);
+        print_state_hex(state);
+        AES::shift_rows(state);
+        print_state_hex(state);
+
+        AES::add_round_key(&self.key, state, nr);
+    }
+
+    pub fn encrypt(&mut self, in_block: &[u8; 16]) -> [u8; 16] {
+
+        //At the start of the Cipher, the input is copied to the State array.
+        let mut state = in_block.clone();
+
+        self.cipher(&mut state);
+
+        return state;
+    }
+
+    pub fn new(key: &Vec<u8>) -> AES {
+
+        let (nk, nr) = match key.len() {
+            16 => Ok((4, 10)),
+            24 => Ok((6, 12)),
+            32 => Ok((8, 14)),
+            _ => Err(key.len()),
+        }.expect("Wrong key length");
+
+        AES {
+            key: AES::key_expansion(key, nk, nr),
+            nr: nr,
+        }
+    }
+
 }
-
-pub fn aes_encrypt(key: &Vec<u8>, in_block: &[u8; 16]) -> [u8; 16] {
-    let (nk, nr) = match key.len() {
-        16 => Ok((4, 10)),
-        24 => Ok((6, 12)),
-        32 => Ok((8, 14)),
-        _ => Err(key.len()),
-    }.expect("Wrong key length");
-
-    let mut expanded_key = key_expansion(&key, nk, nr);
-
-    //At the start of the Cipher, the input is copied to the State array.
-    let mut state = in_block.clone();
-
-    cipher(&mut state, &mut expanded_key, nr);
-
-    return state;
-}
-
-//////////////////////////////////////////
+    //////////////////////////////////////////
 //TESTS
 //////////////////////////////////////////
+#[cfg(test)]
+mod test {
 
-pub fn test() {
-    println!("Running tests ..");
-    test_gf256_mul();
-    test_rot_word();
-    test_shift_rows();
-    test_mix_columns();
-    test_key_expansion();
-    test_sub_bytes();
-    test_aes_encrypt();
-    println!("All ok!");
-}
+    use super::AES;
 
-fn test_gf256_mul() {
-    print!("Testing gf256_mul...");
-    let expected = 1;
-    assert_eq!(gf256_mul(0x53, 0xca), expected);
-    println!("Ok");
-}
+    #[test]
+    fn test_gf256_mul() {
+        let expected = 1;
+        assert_eq!(AES::gf256_mul(0x53, 0xca), expected);
+    }
 
-fn test_rot_word() {
-    print!("Testing rot_word...");
-    let mut vec_test: [u8; 4] = [0, 1, 2, 3];
-    let expected: [u8; 4] = [1, 2, 3, 0];
-    rot_word(&mut vec_test);
-    assert_eq!(vec_test, expected);
-    println!("Ok");
-}
+    #[test]
+    fn test_rot_word() {
+        let mut vec_test: [u8; 4] = [0, 1, 2, 3];
+        let expected: [u8; 4] = [1, 2, 3, 0];
+        AES::rot_word(&mut vec_test);
+        assert_eq!(vec_test, expected);
+    }
 
-fn test_shift_rows() {
-    /*
-    0x0 0x1 0x2 0x3     0x0 0x1 0x2 x03
-    0x4 0x5 0x6 0x7 ->  0x5 0x6 0x7 0x4
-    0x8 0x9 0xa 0xb ->  0xa 0xb 0x8 0x9
-    0xc 0xd 0xe 0xf     0xf 0xc 0xd 0xe
-    */
-    print!("Testing shift_rows...");
-    let mut inp: [u8; 16] = [
-        0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
-    ];
 
-    let expected: [u8; 16] = [
-        0x0, 0x1, 0x2, 0x3, 0x5, 0x6, 0x7, 0x4, 0xa, 0xb, 0x8, 0x9, 0xf, 0xc, 0xd, 0xe
-    ];
+    #[test]
+    fn test_shift_rows() {
+        /*
+        0x0 0x1 0x2 0x3     0x0 0x1 0x2 x03
+        0x4 0x5 0x6 0x7 ->  0x5 0x6 0x7 0x4
+        0x8 0x9 0xa 0xb ->  0xa 0xb 0x8 0x9
+        0xc 0xd 0xe 0xf     0xf 0xc 0xd 0xe
+        */
 
-    shift_rows(&mut inp);
+        let mut inp: [u8; 16] = [
+            0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
+        ];
 
-    assert_eq!(inp, expected);
-    println!("Ok");
-}
+        let expected: [u8; 16] = [
+            0x0, 0x1, 0x2, 0x3, 0x5, 0x6, 0x7, 0x4, 0xa, 0xb, 0x8, 0x9, 0xf, 0xc, 0xd, 0xe
+        ];
 
-//http://www.samiam.org/mix-column.html
-fn test_mix_columns() {
-    print!("Testing mix_columns...");
+        AES::shift_rows(&mut inp);
 
-    let mut i: [u8; 16] = [
-        219, 19, 83, 69, 1, 1, 1, 1, 198, 198, 198, 198, 45, 38, 49, 76
-    ];
-    let expected: [u8; 16] = [
-        142, 77, 161, 188, 1, 1, 1, 1, 198, 198, 198, 198, 77, 126, 189, 248
-    ];
-    mix_columns(&mut i);
-    assert_eq!(i, expected);
-    println!("Ok");
-}
+        assert_eq!(inp, expected);
+    }
 
-fn test_key_expansion() {
-    print!("Testing key_expansion...");
-    let k = vec![
-        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
-        0x3c,
-    ];
+    //http://www.samiam.org/mix-column.html
+    #[test]
+    fn test_mix_columns() {
 
-    let expected = vec![
-        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
-        0x3c, 0xa0, 0xfa, 0xfe, 0x17, 0x88, 0x54, 0x2c, 0xb1, 0x23, 0xa3, 0x39, 0x39, 0x2a, 0x6c,
-        0x76, 0x05, 0xf2, 0xc2, 0x95, 0xf2, 0x7a, 0x96, 0xb9, 0x43, 0x59, 0x35, 0x80, 0x7a, 0x73,
-        0x59, 0xf6, 0x7f, 0x3d, 0x80, 0x47, 0x7d, 0x47, 0x16, 0xfe, 0x3e, 0x1e, 0x23, 0x7e, 0x44,
-        0x6d, 0x7a, 0x88, 0x3b, 0xef, 0x44, 0xa5, 0x41, 0xa8, 0x52, 0x5b, 0x7f, 0xb6, 0x71, 0x25,
-        0x3b, 0xdb, 0x0b, 0xad, 0x00, 0xd4, 0xd1, 0xc6, 0xf8, 0x7c, 0x83, 0x9d, 0x87, 0xca, 0xf2,
-        0xb8, 0xbc, 0x11, 0xf9, 0x15, 0xbc, 0x6d, 0x88, 0xa3, 0x7a, 0x11, 0x0b, 0x3e, 0xfd, 0xdb,
-        0xf9, 0x86, 0x41, 0xca, 0x00, 0x93, 0xfd, 0x4e, 0x54, 0xf7, 0x0e, 0x5f, 0x5f, 0xc9, 0xf3,
-        0x84, 0xa6, 0x4f, 0xb2, 0x4e, 0xa6, 0xdc, 0x4f, 0xea, 0xd2, 0x73, 0x21, 0xb5, 0x8d, 0xba,
-        0xd2, 0x31, 0x2b, 0xf5, 0x60, 0x7f, 0x8d, 0x29, 0x2f, 0xac, 0x77, 0x66, 0xf3, 0x19, 0xfa,
-        0xdc, 0x21, 0x28, 0xd1, 0x29, 0x41, 0x57, 0x5c, 0x00, 0x6e, 0xd0, 0x14, 0xf9, 0xa8, 0xc9,
-        0xee, 0x25, 0x89, 0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6,
-    ];
+        let mut i: [u8; 16] = [
+            219, 19, 83, 69, 1, 1, 1, 1, 198, 198, 198, 198, 45, 38, 49, 76
+        ];
+        let expected: [u8; 16] = [
+            142, 77, 161, 188, 1, 1, 1, 1, 198, 198, 198, 198, 77, 126, 189, 248
+        ];
+        AES::mix_columns(&mut i);
+        assert_eq!(i, expected);
+    }
 
-    let out = key_expansion(&k, 4, 10);
-    assert_eq!(out, expected);
-    println!("Ok");
-}
+    #[test]
+    fn test_sub_bytes() {
 
-fn test_sub_bytes() {}
+        let mut inp : [u8; 16] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f];
 
-fn test_aes_encrypt() {
-    print!("Testing aes_encrypt...");
-    let k = vec![
-        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
-        0x3c,
-    ];
+        let expected : [u8; 16] = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76];
 
-    let i: [u8; 16] = [
-        0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
-        0x34,
-    ];
-    let expected: [u8; 16] = [
-        0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
-        0x32,
-    ];
+        AES::sub_bytes(&mut inp);
 
-    let out = aes_encrypt(&k, &i);
-    assert_eq!(out, expected);
-    println!("Ok");
+        assert_eq!(inp, expected);
+    }
+
+    #[test]
+    fn test_key_expansion() {
+        let k = vec![
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c,
+        ];
+
+        let expected = vec![
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c, 0xa0, 0xfa, 0xfe, 0x17, 0x88, 0x54, 0x2c, 0xb1, 0x23, 0xa3, 0x39, 0x39, 0x2a, 0x6c,
+            0x76, 0x05, 0xf2, 0xc2, 0x95, 0xf2, 0x7a, 0x96, 0xb9, 0x43, 0x59, 0x35, 0x80, 0x7a, 0x73,
+            0x59, 0xf6, 0x7f, 0x3d, 0x80, 0x47, 0x7d, 0x47, 0x16, 0xfe, 0x3e, 0x1e, 0x23, 0x7e, 0x44,
+            0x6d, 0x7a, 0x88, 0x3b, 0xef, 0x44, 0xa5, 0x41, 0xa8, 0x52, 0x5b, 0x7f, 0xb6, 0x71, 0x25,
+            0x3b, 0xdb, 0x0b, 0xad, 0x00, 0xd4, 0xd1, 0xc6, 0xf8, 0x7c, 0x83, 0x9d, 0x87, 0xca, 0xf2,
+            0xb8, 0xbc, 0x11, 0xf9, 0x15, 0xbc, 0x6d, 0x88, 0xa3, 0x7a, 0x11, 0x0b, 0x3e, 0xfd, 0xdb,
+            0xf9, 0x86, 0x41, 0xca, 0x00, 0x93, 0xfd, 0x4e, 0x54, 0xf7, 0x0e, 0x5f, 0x5f, 0xc9, 0xf3,
+            0x84, 0xa6, 0x4f, 0xb2, 0x4e, 0xa6, 0xdc, 0x4f, 0xea, 0xd2, 0x73, 0x21, 0xb5, 0x8d, 0xba,
+            0xd2, 0x31, 0x2b, 0xf5, 0x60, 0x7f, 0x8d, 0x29, 0x2f, 0xac, 0x77, 0x66, 0xf3, 0x19, 0xfa,
+            0xdc, 0x21, 0x28, 0xd1, 0x29, 0x41, 0x57, 0x5c, 0x00, 0x6e, 0xd0, 0x14, 0xf9, 0xa8, 0xc9,
+            0xee, 0x25, 0x89, 0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6,
+        ];
+
+        let out = AES::key_expansion(&k, 4, 10);
+        assert_eq!(out, expected);
+        println!("Ok");
+    }
+
+
+
+    #[test]
+    fn test_aes_encrypt() {
+        let k = vec![
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c,
+        ];
+
+        let i: [u8; 16] = [
+            0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
+            0x34,
+        ];
+        let expected: [u8; 16] = [
+            0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
+            0x32,
+        ];
+
+        let mut aes = AES::new(&k);
+
+        let out = aes.encrypt(&i);
+        assert_eq!(out, expected);
+    }
 }

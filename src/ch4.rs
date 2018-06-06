@@ -19,48 +19,40 @@ Now that the party is jumping
 
 
 */
+use libs::xor::crack_xor;
+use libs::hex::hex_to_bytes;
 
+#[allow(dead_code)]
+fn crack(content: String) -> String {
+    for try in content.split("\n") {
+        if let Some(res) = crack_xor(hex_to_bytes(try)) {
+            return res;
+        }
+    }
+    return String::from("Nope");
+}
 
 
 #[cfg(test)]
 mod test {
 
-    use libs::xor::crack_xor;
-    use libs::hex::hex_to_bytes;
-
-
     use std::fs::File;
     use std::io::prelude::*;
 
-    #[test]
-    fn test_ch4() {
+    use super::*;
 
-        let file = File::open("resources/4.txt");
+    #[test]
+    fn ch4() {
+
+        let mut file = File::open("resources/4.txt").expect("File 4.txt not found.");
         let mut content = String::new();
 
-        match file {
-            Ok(mut f) => {
-                match f.read_to_string(&mut content) {
-                    Ok(x) => x,
-                    Err(e) => panic!(e),
-                }
-            },
-            Err(e) => {
-                panic!(e);
-            }
-        };
+        file.read_to_string(&mut content).expect("Error while reading 4.txt");
 
         let res = crack(content);
 
         assert_eq!("Now that the party is jumping\n", res);
     }
 
-    fn crack(content: String) -> String {
-        for try in content.split("\n") {
-            if let Some(res) = crack_xor(hex_to_bytes(try)) {
-                return res;
-            }
-        }
-        return String::from("Nope");
-    }
+
 }

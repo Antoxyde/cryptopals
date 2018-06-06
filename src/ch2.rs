@@ -16,7 +16,7 @@ mod test {
     use libs::xor::fixed_xor;
 
     #[test]
-    fn test_ch2() {
+    fn ch2() {
         print!("Testing ch2 ...\t");
         let s1 = hex_to_bytes("1c0111001f010100061a024b53535009181c");
         let s2 = hex_to_bytes("686974207468652062756c6c277320657965");
