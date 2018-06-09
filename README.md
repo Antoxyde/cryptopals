@@ -4,15 +4,18 @@
 
 To run all tests type :
 ` cargo test`
+
+
 It includes tests about base64 and aes (at the moment).
 
 If you want to only run the tests for challenges, type:
 `cargo test ch`
 
-and for a special challenge , add the number at the end of the line , (e.g. for challenge 1 : `cargo test ch1`)
+
+and for a special challenge , add the number at the end of the line (e.g. for challenge 1 : `cargo test ch1`)
 
 ## Todo :
-* prefix tests function names with the set number (e.g. set01_ch1) to run tests by sets
+* Prefix tests function names with the set number (e.g. `set01_ch1()`) to run tests by sets
 
 ## Stage 1: Basics
 
