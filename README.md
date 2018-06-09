@@ -1,6 +1,20 @@
 # [Cryptopals challenges](https://www.cryptopals.com/)
 
-### Stage 1: Basics
+## Runing tests :
+
+To run all tests type :
+` cargo test`
+It includes tests about base64 and aes (at the moment).
+
+If you want to only run the tests for challenges, type:
+`cargo test ch`
+
+and for a special challenge , add the number at the end of the line , (e.g. for challenge 1 : `cargo test ch1`)
+
+## Todo :
+* prefix tests function names with the set number (e.g. set01_ch1) to run tests by sets
+
+## Stage 1: Basics
 
 - [x] 01. Convert hex to base64
 - [x] 02. Fixed XOR
@@ -9,9 +23,9 @@
 - [x] 05. Implement repeating-key XOR
 - [x] 06. Break repeating-key XOR
 - [x] 07. AES in ECB mode
-- [ ] 08. Detect AES in ECB mode
+- [x] 08. Detect AES in ECB mode
 
-### Stage 2: Block Crypto
+## Stage 2: Block Crypto
 
 - [ ] 09. Implement PKCS#7 padding
 - [ ] 10. Implement CBC mode
@@ -22,7 +36,7 @@
 - [ ] 15. PKCS#7 padding validation
 - [ ] 16. CBC bitflipping attacks
 
-### Stage 3: Block & Stream Crypto
+## Stage 3: Block & Stream Crypto
 
 - [ ] 17. The CBC padding oracle
 - [ ] 18. Implement CTR, the stream cipher mode
@@ -33,7 +47,7 @@
 - [ ] 23. Clone an MT19937 RNG from its output
 - [ ] 24. Create the MT19937 stream cipher and break it
 
-### Stage 4: Stream Crypto and Randomness
+## Stage 4: Stream Crypto and Randomness
 
 - [ ] 25. Break "random access read/write" AES CTR
 - [ ] 26. CTR bitflipping
@@ -44,7 +58,7 @@
 - [ ] 31. Implement and break HMAC-SHA1 with an artificial timing leak
 - [ ] 32. Break HMAC-SHA1 with a slightly less artificial timing leak
 
-### Stage 5: Diffie-Hellman and Friends
+## Stage 5: Diffie-Hellman and Friends
 
 - [ ] 33. Implement Diffie-Hellman
 - [ ] 34. Implement a MITM key-fixing attack on Diffie-Hellman with parameter injection
@@ -55,7 +69,7 @@
 - [ ] 39. Implement RSA
 - [ ] 40. Implement an E=3 RSA Broadcast attack
 
-### Stage 6: RSA and DSA
+## Stage 6: RSA and DSA
 
 - [ ] 41. Implement unpadded message recovery oracle
 - [ ] 42. Bleichenbacher's e=3 RSA Attack
@@ -66,7 +80,7 @@
 - [ ] 47. Bleichenbacher's PKCS 1.5 Padding Oracle (Simple Case)
 - [ ] 48. Bleichenbacher's PKCS 1.5 Padding Oracle (Complete Case)
 
-### Stage 7: Hashes
+## Stage 7: Hashes
 
 - [ ] 49. CBC-MAC Message Forgery
 - [ ] 50. Hashing with CBC-MAC
