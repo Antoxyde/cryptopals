@@ -3,7 +3,7 @@
 ## Runing tests :
 
 To run all tests type :
-` cargo test`
+`cargo test`
 
 
 It includes tests about base64 and aes (at the moment).
@@ -15,7 +15,7 @@ If you want to only run the tests for challenges, type:
 and for a special challenge , add the number at the end of the line (e.g. for challenge 1 : `cargo test ch1`)
 
 ## Todo :
-* Prefix tests function names with the set number (e.g. `set01_ch1()`) to run tests by sets
+* Prefix test function names with the set number (e.g. `set01_ch1()`) to run tests by set
 
 ## Stage 1: Basics
 
