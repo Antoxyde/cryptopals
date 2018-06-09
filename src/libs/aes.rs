@@ -1,4 +1,5 @@
-use libs::hex::print_state_hex;
+use libs::aes_utils::to_blocks;
+
 //https://csrc.nist.gov/csrc/media/publications/fips/197/final/documents/fips-197.pdf
 
 //probably the most unoptimized implementation of aes you've ever seen, but it was a great way to understand (a bit) of aes's internals
@@ -91,9 +92,15 @@ const RCON: [u8; 256] = [
     0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d,
 ];
 
+#[derive(PartialEq)]
+pub enum AesMode {
+    ECB,
+}
+
 pub struct AES {
     key: Vec<u8>,
     nr: u8,
+    mode: AesMode,
 }
 
 impl AES {
@@ -168,44 +175,77 @@ impl AES {
     }
 
     fn sub_bytes(state: &mut [u8; 16]) {
-        for i in 0..4 {
-            for j in 0..NB {
-                state[(NB * i + j) as usize] = S_BOX[state[(NB * i + j) as usize] as usize];
-            }
+        for i in 0..16 {
+            state[i] = S_BOX[state[i] as usize];
         }
     }
 
-    #[allow(dead_code)]
     fn inv_sub_bytes(state: &mut [u8; 16]) {
-        for i in 0..4 {
-            for j in 0..NB {
-                state[(NB * i + j) as usize] = INV_S_BOX[state[(NB * i + j) as usize] as usize];
-            }
+        for i in 0..16 {
+            state[i] = INV_S_BOX[state[i] as usize];
         }
     }
 
     fn add_round_key(key: &Vec<u8>, state: &mut [u8; 16], r: u8) {
-        for i in 0..4 {
-            for j in 0..NB {
-                state[(NB * j + i) as usize] ^= key[(4 * NB * r + NB * i + j) as usize];
-            }
+        for i in 0..16 {
+            state[i] ^= key[(4 * NB * r) as usize + i];
         }
     }
 
-    fn shift_rows(state: &mut [u8; 16]) {
-        let mut tmp: u8;
-        let mut s: u8;
+    fn inv_shift_rows(state: &mut [u8; 16]) {
 
-        for i in 1..4 {
-            s = 0;
-            while s < i {
-                tmp = state[(NB * i) as usize];
-                for k in 1..NB {
-                    state[(NB * i + k - 1) as usize] = state[(NB * i + k) as usize];
-                }
-                state[(NB * i + NB - 1) as usize] = tmp;
-                s += 1;
-            }
+        let mut temp = vec![0; 16];
+
+        temp[0] = state[0];
+        temp[1] = state[13];
+        temp[2] = state[10];
+        temp[3] = state[7];
+
+        temp[4] = state[4];
+        temp[5] = state[1];
+        temp[6] = state[14];
+        temp[7] = state[11];
+
+        temp[8] = state[8];
+        temp[9] = state[5];
+        temp[10] = state[2];
+        temp[11] = state[15];
+
+        temp[12] = state[12];
+        temp[13] = state[9];
+        temp[14] = state[6];
+        temp[15] = state[3];
+
+        for i in 0..16 {
+            state[i] = temp[i];
+        }
+
+    }
+
+    fn shift_rows(state: &mut [u8; 16]) {
+        let mut temp = vec![0; 16];
+        temp[0] = state[0];
+        temp[1] = state[5];
+        temp[2] = state[10];
+        temp[3] = state[15];
+
+        temp[4] = state[4];
+        temp[5] = state[9];
+        temp[6] = state[14];
+        temp[7] = state[3];
+
+        temp[8] = state[8];
+        temp[9] = state[13];
+        temp[10] = state[2];
+        temp[11] = state[7];
+
+        temp[12] = state[12];
+        temp[13] = state[1];
+        temp[14] = state[6];
+        temp[15] = state[11];
+
+        for i in 0..16 {
+            state[i] = temp[i];
         }
     }
 
@@ -220,6 +260,20 @@ impl AES {
             state[4 * i + 1] = b0 ^ AES::gf256_mul(2, b1) ^ AES::gf256_mul(3, b2) ^ b3;
             state[4 * i + 2] = b0 ^ b1 ^ AES::gf256_mul(2, b2) ^ AES::gf256_mul(3, b3);
             state[4 * i + 3] = AES::gf256_mul(3, b0) ^ b1 ^ b2 ^ AES::gf256_mul(2, b3);
+        }
+    }
+
+    fn inv_mix_columns(state: &mut [u8; 16]) {
+        for i in 0..4 {
+            let b0 = state[4 * i + 0];
+            let b1 = state[4 * i + 1];
+            let b2 = state[4 * i + 2];
+            let b3 = state[4 * i + 3];
+
+            state[4 * i + 0] = AES::gf256_mul(14, b0) ^ AES::gf256_mul(11, b1) ^ AES::gf256_mul(13, b2) ^ AES::gf256_mul(9, b3);
+            state[4 * i + 1] = AES::gf256_mul(9, b0) ^ AES::gf256_mul(14, b1) ^ AES::gf256_mul(11, b2) ^ AES::gf256_mul(13, b3);
+            state[4 * i + 2] = AES::gf256_mul(13, b0) ^ AES::gf256_mul(9, b1) ^ AES::gf256_mul(14, b2) ^ AES::gf256_mul(11, b3);
+            state[4 * i + 3] = AES::gf256_mul(11, b0) ^ AES::gf256_mul(13, b1) ^ AES::gf256_mul(9, b2) ^ AES::gf256_mul(14, b3);
         }
     }
 
@@ -270,39 +324,80 @@ impl AES {
 
     fn cipher(&mut self, state: &mut [u8; 16]) {
         let nr = self.nr;
-        print_state_hex(state);
+
         AES::add_round_key(&self.key, state, 0);
-        print_state_hex(state);
+
         for r in 1..nr {
             AES::sub_bytes(state);
-            print_state_hex(state);
             AES::shift_rows(state);
-            print_state_hex(state);
             AES::mix_columns(state);
-            print_state_hex(state);
             AES::add_round_key(&self.key, state, r);
-            print_state_hex(state);
         }
 
         AES::sub_bytes(state);
-        print_state_hex(state);
         AES::shift_rows(state);
-        print_state_hex(state);
-
         AES::add_round_key(&self.key, state, nr);
     }
 
-    pub fn encrypt(&mut self, in_block: &[u8; 16]) -> [u8; 16] {
 
-        //At the start of the Cipher, the input is copied to the State array.
-        let mut state = in_block.clone();
+    fn inv_cipher(&mut self, state: &mut [u8; 16]) {
+        let nr = self.nr;
 
-        self.cipher(&mut state);
+        AES::add_round_key(&self.key, state, nr);
+        for r in (1..nr).rev() {
+            AES::inv_shift_rows(state);
+            AES::inv_sub_bytes(state);
+            AES::add_round_key(&self.key, state, r);
+            AES::inv_mix_columns(state);
+        }
 
-        return state;
+        AES::inv_shift_rows(state);
+        AES::inv_sub_bytes(state);
+        AES::add_round_key(&self.key, state, 0);
+
     }
 
-    pub fn new(key: &Vec<u8>) -> AES {
+    pub fn decrypt(&mut self, input: &Vec<u8>) -> Vec<u8> {
+        let blocks: Vec<[u8; 16]> = to_blocks(input);
+        let mut result: Vec<u8> = Vec::new();
+
+        if self.mode == AesMode::ECB {
+            for mut block in blocks {
+                self.inv_cipher(&mut block);
+                for byte in block.iter() {
+                    result.push(*byte);
+                }
+            }
+        } else {
+            panic!("Unsupported operation mode.");
+        }
+
+        return result;
+
+}
+
+    pub fn encrypt(&mut self, input: &Vec<u8>) -> Vec<u8> {
+
+        //At the start of the Cipher, the input is copied to the State array.
+        let blocks: Vec<[u8; 16]> = to_blocks(input);
+        let mut result: Vec<u8> = Vec::new();
+
+        if self.mode == AesMode::ECB {
+            for mut block in blocks {
+                self.cipher(&mut block);
+                for byte in block.iter() {
+                    result.push(*byte);
+                }
+            }
+        } else {
+            panic!("Unsupported operation mode.");
+        }
+
+
+        return result;
+    }
+
+    pub fn new(key: &Vec<u8>, mode: AesMode) -> AES {
 
         let (nk, nr) = match key.len() {
             16 => Ok((4, 10)),
@@ -314,6 +409,7 @@ impl AES {
         AES {
             key: AES::key_expansion(key, nk, nr),
             nr: nr,
+            mode: mode,
         }
     }
 
@@ -324,7 +420,7 @@ impl AES {
 #[cfg(test)]
 mod test {
 
-    use super::AES;
+    use super::{AES, AesMode};
 
     #[test]
     fn test_gf256_mul() {
@@ -343,22 +439,32 @@ mod test {
 
     #[test]
     fn test_shift_rows() {
-        /*
-        0x0 0x1 0x2 0x3     0x0 0x1 0x2 x03
-        0x4 0x5 0x6 0x7 ->  0x5 0x6 0x7 0x4
-        0x8 0x9 0xa 0xb ->  0xa 0xb 0x8 0x9
-        0xc 0xd 0xe 0xf     0xf 0xc 0xd 0xe
-        */
 
         let mut inp: [u8; 16] = [
             0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
         ];
 
         let expected: [u8; 16] = [
-            0x0, 0x1, 0x2, 0x3, 0x5, 0x6, 0x7, 0x4, 0xa, 0xb, 0x8, 0x9, 0xf, 0xc, 0xd, 0xe
+            0x0, 0x5, 0xa, 0xf, 0x4, 0x9, 0xe, 0x3, 0x8, 0xd, 0x2, 0x7, 0xc, 0x1, 0x6, 0xb
         ];
 
         AES::shift_rows(&mut inp);
+
+        assert_eq!(inp, expected);
+    }
+
+    #[test]
+    fn test_inv_shift_rows() {
+
+        let expected: [u8; 16] = [
+            0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
+        ];
+
+        let mut inp: [u8; 16] = [
+            0x0, 0x5, 0xa, 0xf, 0x4, 0x9, 0xe, 0x3, 0x8, 0xd, 0x2, 0x7, 0xc, 0x1, 0x6, 0xb
+        ];
+
+        AES::inv_shift_rows(&mut inp);
 
         assert_eq!(inp, expected);
     }
@@ -378,6 +484,19 @@ mod test {
     }
 
     #[test]
+    fn test_inv_mix_columns() {
+
+        let expected: [u8; 16] = [
+            219, 19, 83, 69, 1, 1, 1, 1, 198, 198, 198, 198, 45, 38, 49, 76
+        ];
+        let mut i: [u8; 16] = [
+            142, 77, 161, 188, 1, 1, 1, 1, 198, 198, 198, 198, 77, 126, 189, 248
+        ];
+        AES::inv_mix_columns(&mut i);
+        assert_eq!(i, expected);
+    }
+
+    #[test]
     fn test_sub_bytes() {
 
         let mut inp : [u8; 16] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f];
@@ -385,6 +504,18 @@ mod test {
         let expected : [u8; 16] = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76];
 
         AES::sub_bytes(&mut inp);
+
+        assert_eq!(inp, expected);
+    }
+
+    #[test]
+    fn test_inv_sub_bytes() {
+
+        let expected: [u8; 16] = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f];
+
+        let mut inp: [u8; 16] = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76];
+
+        AES::inv_sub_bytes(&mut inp);
 
         assert_eq!(inp, expected);
     }
@@ -429,14 +560,44 @@ mod test {
             0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
             0x34,
         ];
+
         let expected: [u8; 16] = [
             0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
             0x32,
         ];
 
-        let mut aes = AES::new(&k);
+        let mut aes = AES::new(&k, AesMode::ECB);
 
-        let out = aes.encrypt(&i);
+        let input = i.iter().cloned().collect();
+
+        let out = aes.encrypt(&input);
         assert_eq!(out, expected);
     }
+
+    #[test]
+    fn test_aes_decrypt() {
+        let k = vec![
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c,
+        ];
+
+        let expected: [u8; 16] = [
+            0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
+            0x34,
+        ];
+
+        let i: [u8; 16] = [
+            0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
+            0x32,
+        ];
+
+        let mut aes = AES::new(&k, AesMode::ECB);
+
+        let input = i.iter().cloned().collect();
+
+        let out = aes.decrypt(&input);
+        assert_eq!(out, expected);
+    }
+
+
 }

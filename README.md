@@ -8,7 +8,7 @@
 - [x] 04. Detect single-character XOR
 - [x] 05. Implement repeating-key XOR
 - [x] 06. Break repeating-key XOR
-- [ ] 07. AES in ECB mode
+- [x] 07. AES in ECB mode
 - [ ] 08. Detect AES in ECB mode
 
 ### Stage 2: Block Crypto

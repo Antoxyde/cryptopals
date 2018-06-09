@@ -1,6 +1,7 @@
 use libs::others::m_split;
 
-pub fn base64_encode(bytes: Vec<u8>) -> String {
+pub fn base64_encode(data: &Vec<u8>) -> String {
+    let bytes = data.clone();
     let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".as_bytes();
     let mut encoded = String::new();
 
@@ -38,24 +39,67 @@ pub fn base64_encode(bytes: Vec<u8>) -> String {
     encoded
 }
 
-pub fn base64_decode(data: String) -> Vec<u8> {
+pub fn base64_decode(data: &String) -> Vec<u8> {
     let mut decoded: Vec<u8> = Vec::new();
+    let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let encoded = data.clone();
 
-    if data.len() % 4 != 0 {
+    if encoded.len() % 4 != 0 {
         panic!("Invalid base64 input.");
     }
 
-    for sl in m_split(&data.replace("=", "A"), 4) {
-        let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        let mut total = (charset.find(sl.chars().nth(0).unwrap()).unwrap() as u64) << 18;
-        total += (charset.find(sl.chars().nth(1).unwrap()).unwrap() as u64) << 12;
-        total += (charset.find(sl.chars().nth(2).unwrap()).unwrap() as u64) << 6;
-        total += charset.find(sl.chars().nth(3).unwrap()).unwrap() as u64;
+    for sl in m_split(&encoded.replace("=", "A"), 4) {
 
-        decoded.push(((total >> 16) & 127) as u8);
-        decoded.push(((total >> 8) & 127) as u8);
-        decoded.push((total & 127) as u8);
+        let ch1 = sl.chars().nth(0).unwrap();
+        let ch2 = sl.chars().nth(1).unwrap();
+        let ch3 = sl.chars().nth(2).unwrap();
+        let ch4 = sl.chars().nth(3).unwrap();
+
+        let enc1: u64 = (charset.find(ch1).unwrap() as u64) << 18;
+        let enc2: u64 = (charset.find(ch2).unwrap() as u64) << 12;
+        let enc3: u64 = (charset.find(ch3).unwrap() as u64) << 6;
+        let enc4: u64 = charset.find(ch4).unwrap() as u64;
+
+        println!("{:b} {:b} {:b} {:b}", enc1, enc2, enc3, enc4);
+        println!("Became : ");
+
+        let total = enc1 + enc2 + enc3 + enc4;
+
+        let dec1 = ((total >> 16) & 0xff) as u8;
+        let dec2 = ((total >> 8) & 0xff) as u8;
+        let dec3 = (total & 0xff) as u8;
+
+        println!("{:b} {:b} {:b}", dec1, dec2, dec3);
+
+        decoded.push(dec1);
+        decoded.push(dec2);
+        decoded.push(dec3);
+    }
+
+    while decoded[decoded.len() - 1 ] == 0 {
+        decoded.pop();
     }
 
     decoded
+}
+
+//////////////////////////////////////////
+//TESTS
+//////////////////////////////////////////
+#[cfg(test)]
+mod test {
+
+    use super::{base64_decode, base64_encode};
+
+    #[test]
+    fn test_base64() {
+        let input = String::from("CRIwqt4+szDbqkNY+I0qbDe3LQz0wiw0SuxBQtAM5TDdMbjCMD/venUDW9BL");
+        let inp = input.clone();
+        let dec = base64_decode(&inp);
+        println!("{:x?}", dec);
+        let enc = base64_encode(&dec);
+        println!("{:x?}", input);
+        println!("{:x?}", enc);
+        assert_eq!(input, enc);
+    }
 }

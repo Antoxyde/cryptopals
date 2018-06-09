@@ -14,6 +14,7 @@ pub fn m_split(string: &str, sub_len: usize) -> Vec<&str> {
     subs
 }
 
+
 pub fn count_letter_and_spaces(s: &[u8]) -> f32 {
     let mut count = 0i32;
     for i in 0..s.len() {

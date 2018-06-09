@@ -25,7 +25,7 @@ mod test {
         file.read_to_string(&mut encoded_content).expect("Error while reading 6.txt");
 
         let content: String =
-            String::from_utf8(base64_decode(encoded_content.replace("\n", ""))).unwrap();
+            String::from_utf8(base64_decode(&encoded_content.replace("\n", ""))).unwrap();
 
         let mut keysize_guess: Vec<(i32, i32)> = Vec::new();
 
