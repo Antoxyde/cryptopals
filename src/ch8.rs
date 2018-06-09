@@ -5,8 +5,6 @@ https://www.cryptopals.com/sets/1/challenges/8
 
 
 
-
-
 #[cfg(test)]
 mod test {
 

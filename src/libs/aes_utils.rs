@@ -1,5 +1,3 @@
-
-
 pub fn to_blocks(bytes: &Vec<u8>) -> Vec<[u8; 16]> {
     assert!(bytes.len() % 16 == 0);
 
