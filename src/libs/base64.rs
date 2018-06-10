@@ -1,6 +1,6 @@
 use libs::others::m_split;
 
-pub fn base64_encode(data: &Vec<u8>) -> String {
+pub fn base64_encode(data: &[u8]) -> String {
     let bytes = data.clone();
     let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".as_bytes();
     let mut encoded = String::new();
@@ -39,7 +39,7 @@ pub fn base64_encode(data: &Vec<u8>) -> String {
     encoded
 }
 
-pub fn base64_decode(data: &String) -> Vec<u8> {
+pub fn base64_decode(data: &str) -> Vec<u8> {
     let mut decoded: Vec<u8> = Vec::new();
     let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let encoded = data.clone();
@@ -60,16 +60,11 @@ pub fn base64_decode(data: &String) -> Vec<u8> {
         let enc3: u64 = (charset.find(ch3).unwrap() as u64) << 6;
         let enc4: u64 = charset.find(ch4).unwrap() as u64;
 
-        println!("{:b} {:b} {:b} {:b}", enc1, enc2, enc3, enc4);
-        println!("Became : ");
-
         let total = enc1 + enc2 + enc3 + enc4;
 
         let dec1 = ((total >> 16) & 0xff) as u8;
         let dec2 = ((total >> 8) & 0xff) as u8;
         let dec3 = (total & 0xff) as u8;
-
-        println!("{:b} {:b} {:b}", dec1, dec2, dec3);
 
         decoded.push(dec1);
         decoded.push(dec2);

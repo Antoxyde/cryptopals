@@ -1,4 +1,4 @@
-pub fn to_blocks(bytes: &Vec<u8>) -> Vec<[u8; 16]> {
+pub fn to_blocks(bytes: &[u8]) -> Vec<[u8; 16]> {
     assert!(bytes.len() % 16 == 0);
 
     let mut ret: Vec<[u8; 16]> = Vec::new();
@@ -14,7 +14,7 @@ pub fn to_blocks(bytes: &Vec<u8>) -> Vec<[u8; 16]> {
     return ret;
 }
 
-pub fn is_ecb(blocks: &Vec<[u8; 16]>) -> bool {
+pub fn is_ecb(blocks: &[[u8; 16]]) -> bool {
     for index in 0..blocks.len() {
         let occurence = blocks.into_iter().filter(|x| **x == blocks[index]).count();
         if occurence > 1 {

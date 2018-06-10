@@ -1,7 +1,8 @@
 /*
-Cryptoptals stage 1 challenge 7 solution
-https://www.cryptopals.com/sets/1/challenges/7
+Cryptoptals stage 2 challenge 2 solution
+https://www.cryptopals.com/sets/2/challenges/2
 */
+
 #[cfg(test)]
 mod test {
 
@@ -12,23 +13,18 @@ mod test {
     use std::io::prelude::*;
 
     #[test]
-    fn ch7() {
-
+    fn ch10() {
         let key = "YELLOW SUBMARINE".as_bytes().to_owned();
-        let mut aes = AES::new(&key, OperationMode::ECB);
+        let mode = OperationMode::CBC {iv: [0u8; 16]};
+        let mut aes = AES::new(&key, mode);
 
-        let mut file = File::open("resources/7.txt").expect("File 7.txt not found.");
-
+        let mut file = File::open("resources/10.txt").expect("File 10.txt not found.");
         let mut b64input = String::new();
-
         file.read_to_string(&mut b64input).expect("Error while reading 7.txt");
-
         let input = base64_decode(&b64input.replace("\n", ""));
 
-        let result = String::from_utf8(aes.decrypt(&input)).unwrap();
+        let result = String::from_utf8(aes.decrypt(&input));
 
-        let expected = "I'm back and I'm ringin' the bell";
-
-        assert!(&result.starts_with(expected));
+        println!("{}", result.unwrap());
     }
 }

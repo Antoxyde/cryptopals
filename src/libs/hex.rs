@@ -10,7 +10,7 @@ pub fn hex_to_bytes(hexstring: &str) -> Vec<u8> {
     byte_vec
 }
 
-pub fn bytes_to_hex(bytes: Vec<u8>) -> String {
+pub fn bytes_to_hex(bytes: &[u8]) -> String {
     let mut hexstring = String::new();
     for i in 0..bytes.len() {
         hexstring.push_str(&format!("{:02x}", bytes[i] as u32));

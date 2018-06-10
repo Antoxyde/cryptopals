@@ -1,5 +1,5 @@
 use libs::aes_utils::to_blocks;
-
+use libs::xor::key_cycling_xor;
 //https://csrc.nist.gov/csrc/media/publications/fips/197/final/documents/fips-197.pdf
 
 //probably the most unoptimized implementation of aes you've ever seen, but it was a great way to understand (a bit) of aes's internals
@@ -92,15 +92,16 @@ const RCON: [u8; 256] = [
     0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d,
 ];
 
-#[derive(PartialEq)]
-pub enum AesMode {
+#[derive(PartialEq, Copy, Clone)]
+pub enum OperationMode {
     ECB,
+    CBC {iv: [u8; 16]},
 }
 
 pub struct AES {
     key: Vec<u8>,
     nr: u8,
-    mode: AesMode,
+    mode: OperationMode,
 }
 
 impl AES {
@@ -186,7 +187,7 @@ impl AES {
         }
     }
 
-    fn add_round_key(key: &Vec<u8>, state: &mut [u8; 16], r: u8) {
+    fn add_round_key(key: &[u8], state: &mut [u8; 16], r: u8) {
         for i in 0..16 {
             state[i] ^= key[(4 * NB * r) as usize + i];
         }
@@ -280,7 +281,7 @@ impl AES {
 
         //https://en.wikipedia.org/wiki/Rijndael_key_schedule
         //http://www.samiam.org/key-schedule.html
-        fn key_expansion(k: &Vec<u8>, nk: u8, nr: u8) -> Vec<u8> {
+        fn key_expansion(k: &[u8], nk: u8, nr: u8) -> Vec<u8> {
             let mut tmp: [u8; 4] = [0, 0, 0, 0];
 
             let len = NB * (nr + 1);
@@ -357,47 +358,108 @@ impl AES {
 
     }
 
-    pub fn decrypt(&mut self, input: &Vec<u8>) -> Vec<u8> {
+    fn aes_ecb_decrypt(&mut self, input: &[u8]) -> Vec<u8> {
         let blocks: Vec<[u8; 16]> = to_blocks(input);
         let mut result: Vec<u8> = Vec::new();
 
-        if self.mode == AesMode::ECB {
-            for mut block in blocks {
-                self.inv_cipher(&mut block);
-                for byte in block.iter() {
-                    result.push(*byte);
-                }
+        for mut block in blocks {
+            self.inv_cipher(&mut block);
+            for byte in block.iter() {
+                result.push(*byte);
             }
-        } else {
-            panic!("Unsupported operation mode.");
         }
 
         return result;
+    }
 
-}
-
-    pub fn encrypt(&mut self, input: &Vec<u8>) -> Vec<u8> {
-
-        //At the start of the Cipher, the input is copied to the State array.
+    fn aes_ecb_encrypt(&mut self, input: &[u8]) -> Vec<u8> {
         let blocks: Vec<[u8; 16]> = to_blocks(input);
         let mut result: Vec<u8> = Vec::new();
 
-        if self.mode == AesMode::ECB {
-            for mut block in blocks {
-                self.cipher(&mut block);
-                for byte in block.iter() {
-                    result.push(*byte);
-                }
+        for mut block in blocks {
+            self.cipher(&mut block);
+            for byte in block.iter() {
+                result.push(*byte);
             }
-        } else {
-            panic!("Unsupported operation mode.");
         }
+
+        return result;
+    }
+
+    fn aes_cbc_decrypt(&mut self, input: &[u8]) -> Vec<u8> {
+        let blocks: Vec<[u8; 16]> = to_blocks(input);
+        let mut result: Vec<u8> = Vec::new();
+        let mut old_block = match self.mode {
+            OperationMode::CBC { iv } => iv,
+            _ => panic!("Wtf"),
+        };
+
+        for block in blocks {
+            let mut current_block: [u8; 16] = block.clone(); //Save the current CT to decrypt the next block (xor)
+
+            self.inv_cipher(&mut current_block);
+
+            let temp_plain_block: Vec<u8> = key_cycling_xor(&current_block, &old_block);
+            let mut plain_block = [0u8; 16];
+            plain_block.copy_from_slice(&temp_plain_block[0..16]);
+
+            for byte in plain_block.iter() {
+                result.push(*byte);
+            }
+
+            old_block = block;
+        }
+
 
 
         return result;
     }
 
-    pub fn new(key: &Vec<u8>, mode: AesMode) -> AES {
+    fn aes_cbc_encrypt(&mut self, input: &[u8]) -> Vec<u8> {
+        let blocks: Vec<[u8; 16]> = to_blocks(input);
+        let mut result: Vec<u8> = Vec::new();
+        let mut old_block = match self.mode {
+            OperationMode::CBC { iv } => iv,
+            _ => panic!("Wtf"),
+        };
+
+        for block in blocks {
+            let temp_xored_block: Vec<u8> = key_cycling_xor(&block, &old_block);
+            let mut xored_block = [0u8; 16];
+
+            xored_block.copy_from_slice(&temp_xored_block[0..16]);
+
+            self.cipher(&mut xored_block);
+
+            old_block = xored_block;
+
+            for byte in xored_block.iter() {
+                result.push(*byte);
+            }
+        }
+
+        return result;
+    }
+
+    pub fn decrypt(&mut self, input: &[u8]) -> Vec<u8> {
+        let result: Vec<u8> =  match self.mode {
+            OperationMode::ECB => self.aes_ecb_decrypt(input),
+            OperationMode::CBC{ .. } => self.aes_cbc_decrypt(input),
+        };
+        return result;
+    }
+
+    pub fn encrypt(&mut self, input: &[u8]) -> Vec<u8> {
+
+        let result: Vec<u8> =  match self.mode {
+            OperationMode::ECB => self.aes_ecb_encrypt(input),
+            OperationMode::CBC{ .. } => self.aes_cbc_encrypt(input),
+        };
+
+        return result;
+    }
+
+    pub fn new(key: &[u8], mode: OperationMode) -> AES {
 
         let (nk, nr) = match key.len() {
             16 => Ok((4, 10)),
@@ -420,7 +482,7 @@ impl AES {
 #[cfg(test)]
 mod test {
 
-    use super::{AES, AesMode};
+    use super::{AES, OperationMode};
 
     #[test]
     fn test_gf256_mul() {
@@ -550,13 +612,13 @@ mod test {
 
 
     #[test]
-    fn test_aes_encrypt() {
+    fn test_aes_ecb_encrypt() {
         let k = vec![
             0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
             0x3c,
         ];
 
-        let i: [u8; 16] = [
+        let input: [u8; 16] = [
             0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07,
             0x34,
         ];
@@ -566,16 +628,14 @@ mod test {
             0x32,
         ];
 
-        let mut aes = AES::new(&k, AesMode::ECB);
-
-        let input = i.iter().cloned().collect();
+        let mut aes = AES::new(&k, OperationMode::ECB);
 
         let out = aes.encrypt(&input);
         assert_eq!(out, expected);
     }
 
     #[test]
-    fn test_aes_decrypt() {
+    fn test_aes_ecb_decrypt() {
         let k = vec![
             0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
             0x3c,
@@ -586,17 +646,36 @@ mod test {
             0x34,
         ];
 
-        let i: [u8; 16] = [
+        let input: [u8; 16] = [
             0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
             0x32,
         ];
 
-        let mut aes = AES::new(&k, AesMode::ECB);
-
-        let input = i.iter().cloned().collect();
+        let mut aes = AES::new(&k, OperationMode::ECB);
 
         let out = aes.decrypt(&input);
         assert_eq!(out, expected);
+    }
+
+    #[test]
+    fn test_aes_cbc() {
+
+        let k = vec![
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c,
+        ];
+
+        let input: [u8; 32] = [
+            0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b,
+            0x32,0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,
+            0x3c,
+        ];
+
+        let mut aes = AES::new(&k, OperationMode::CBC {iv: [0u8; 16]});
+        let encrypted = aes.encrypt(&input);
+        let decrypted = aes.decrypt(&encrypted);
+
+        assert_eq!(decrypted, input);
     }
 
 

@@ -1,10 +1,10 @@
-pub fn pkcs7_unpad(data: &Vec<u8>, blocksize: usize) -> Result<Vec<u8>, &str> {
+pub fn pkcs7_unpad(data: &[u8], blocksize: usize) -> Result<Vec<u8>, &str> {
 
     if data.len() % blocksize != 0 {
         return Err("Invalid data size (not padded or wrong blocksize).");
     }
 
-    let mut unpadded = data.clone();
+    let mut unpadded: Vec<u8> = data.clone().to_owned();
 
     let pad: u8 = unpadded[unpadded.len() - 1];
 
@@ -23,10 +23,10 @@ pub fn pkcs7_unpad(data: &Vec<u8>, blocksize: usize) -> Result<Vec<u8>, &str> {
     return Ok(unpadded);
 }
 
-pub fn pkcs7_pad(data: &Vec<u8>, blocksize: usize) -> Vec<u8> {
+pub fn pkcs7_pad(data: &[u8], blocksize: usize) -> Vec<u8> {
 
     let pad: u8 = (blocksize - (data.len() % blocksize)) as u8;
-    let mut padded = data.clone();
+    let mut padded: Vec<u8> = data.clone().to_owned();
 
     for _ in 0..pad {
         padded.push(pad);
