@@ -1,3 +1,4 @@
+extern crate rand;
 pub mod libs;
 mod ch1;
 mod ch2;
@@ -9,3 +10,4 @@ mod ch7;
 mod ch8;
 mod ch9;
 mod ch10;
+mod ch11;

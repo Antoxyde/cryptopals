@@ -23,8 +23,9 @@ mod test {
         file.read_to_string(&mut b64input).expect("Error while reading 7.txt");
         let input = base64_decode(&b64input.replace("\n", ""));
 
-        let result = String::from_utf8(aes.decrypt(&input));
+        let result = String::from_utf8(aes.decrypt(&input)).unwrap();
+        let expected = "I'm back and I'm ringin' the bell";
 
-        println!("{}", result.unwrap());
+        assert!(&result.starts_with(expected));
     }
 }

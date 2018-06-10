@@ -5,3 +5,4 @@ pub mod xor;
 pub mod aes;
 pub mod aes_utils;
 pub mod padding;
+pub mod oracle;

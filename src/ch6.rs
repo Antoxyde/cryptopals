@@ -30,7 +30,7 @@ mod test {
         let mut keysize_guess: Vec<(i32, i32)> = Vec::new();
 
         for guess in 2..40 as usize {
-            //Could be optimized ? it takes several seconds ..
+            //Could be optimized ? it take several seconds ..
             let splitted = m_split(&content, guess); //make blocks of guess size;
             let mut counter = 0;
             let mut hd = 0;
@@ -72,7 +72,7 @@ mod test {
 
         let u_content = content.clone().into_bytes();
 
-        let plaintext = String::from_utf8(key_cycling_xor(&u_content, &key)).unwrap(); //Decrypt the content with the key we jsut found
+        let _plaintext = String::from_utf8(key_cycling_xor(&u_content, &key)).unwrap(); //Decrypt the content with the key we jsut found
 
         assert_eq!("Terminator X: Bring the noise".as_bytes().to_owned() , key);
     }

@@ -1,3 +1,6 @@
+use rand;
+use rand::Rng;
+
 pub fn to_blocks(bytes: &[u8]) -> Vec<[u8; 16]> {
     assert!(bytes.len() % 16 == 0);
 
@@ -15,6 +18,7 @@ pub fn to_blocks(bytes: &[u8]) -> Vec<[u8; 16]> {
 }
 
 pub fn is_ecb(blocks: &[[u8; 16]]) -> bool {
+
     for index in 0..blocks.len() {
         let occurence = blocks.into_iter().filter(|x| **x == blocks[index]).count();
         if occurence > 1 {
@@ -23,4 +27,15 @@ pub fn is_ecb(blocks: &[[u8; 16]]) -> bool {
     }
 
     return false;
+}
+
+pub fn gen_rnd_128_bits() -> [u8; 16] {
+    let mut bits: [u8; 16] = [0; 16];
+    let mut rng = rand::thread_rng();
+
+    for x in &mut bits {
+        *x = rng.gen::<u8>();
+    }
+
+    return bits;
 }
