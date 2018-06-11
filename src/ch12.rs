@@ -37,6 +37,7 @@ mod test {
 
     use super::m_encrypt;
     use libs::aes_utils::{is_ecb,to_blocks};
+    use std::collections::VecDeque;
 
     #[test]
     fn ch12() {
@@ -62,35 +63,46 @@ mod test {
 
         assert!(is_ecb(&blocks));
 
-        let mut data = vec![0; 16];
+        let mut data = VecDeque::new();
 
-        for x in (0..16).rev() {
+        for _ in (0..16).rev() {
 
             let mut codebook: Vec<[u8; 16]> = Vec::new();
 
             //Generate the codebook
             for c in 0..126 {
                 let mut plain = data.clone();
-                plain[x] = c;
-
-                println!("Encrypting {:?}", plain);
+                plain.push_back(c);
                 let encrypted = m_encrypt(&plain);
                 let mut block =  [0u8; 16];
                 block.copy_from_slice(&encrypted[0..16]);
-
                 codebook.push(block);
             }
 
+
             let encrypted = m_encrypt(&data);
+            println!("Encrypting {:?} {}", data, data.len());
             let mut block =  [0u8; 16];
             block.copy_from_slice(&encrypted[0..16]);
 
+            let mut letter = 0u8;
+
             for y in 0..126 as u8 {
                 if codebook[y as usize] == block {
-                    println!("Letter at place {} is {}", x, y as char);
-                    data[x] = y;
+                    println!(" {:x?} ==  {:x?}", codebook[y as usize], block);
+                    letter = y;
+                    break;
                 }
             }
+            if letter == 0 {
+                panic!("Letter not found :(");
+            }
+
+            data.reverse();
+            data.pop();
+            data.reverse();
+
+            data.push(letter);
 
         }
 
