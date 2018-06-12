@@ -37,7 +37,8 @@ mod test {
 
     use super::m_encrypt;
     use libs::aes_utils::{is_ecb,to_blocks};
-    use std::collections::VecDeque;
+    use libs::base64::base64_decode;
+    use libs::padding::pkcs7_unpad;
 
     #[test]
     fn ch12() {
@@ -63,27 +64,36 @@ mod test {
 
         assert!(is_ecb(&blocks));
 
-        let mut data = VecDeque::new();
 
-        for _ in (0..16).rev() {
 
+        let mut unknown_decrypted_string = String::new();
+
+        let size_guess_uknown_string = 144;
+
+        let mut data = vec![0; size_guess_uknown_string + block_size - 1];
+        let mut codebook_data = data.clone();
+
+        for _ in 0..size_guess_uknown_string {
+
+            //Rust does'nt support array with unfiex length at compile time so i'm forced to "hardcode" 16 here
             let mut codebook: Vec<[u8; 16]> = Vec::new();
 
             //Generate the codebook
             for c in 0..126 {
-                let mut plain = data.clone();
-                plain.push_back(c);
+
+                let mut plain = codebook_data.clone();
+                plain.push(c);
                 let encrypted = m_encrypt(&plain);
-                let mut block =  [0u8; 16];
-                block.copy_from_slice(&encrypted[0..16]);
+                let mut block =  [0u8; 16]; //Same for this 16
+                block.copy_from_slice(&encrypted[size_guess_uknown_string..size_guess_uknown_string+block_size]);
                 codebook.push(block);
             }
 
 
             let encrypted = m_encrypt(&data);
             println!("Encrypting {:?} {}", data, data.len());
-            let mut block =  [0u8; 16];
-            block.copy_from_slice(&encrypted[0..16]);
+            let mut block =  [0u8; 16]; //Again :(
+            block.copy_from_slice(&encrypted[size_guess_uknown_string..size_guess_uknown_string+block_size]);
 
             let mut letter = 0u8;
 
@@ -95,21 +105,37 @@ mod test {
                 }
             }
             if letter == 0 {
-                panic!("Letter not found :(");
+                break; //End of the unknown string
             }
 
             data.reverse();
             data.pop();
             data.reverse();
 
-            data.push(letter);
+            codebook_data.reverse();
+            codebook_data.pop();
+            codebook_data.reverse();
+            codebook_data.push(letter);
+
+            unknown_decrypted_string.push(letter as char);
 
         }
 
-        let result = String::from_utf8(data).unwrap();
-        println!("First block was {}", result);
+
+        //Filter out non-printable characters
+        let decrypted_string: Vec<u8> = unknown_decrypted_string.into_bytes()
+            .iter()
+            .filter(|x| (**x >= 0x20 && **x < 0xff) || (**x == 0x0a))
+            .map(|x| *x)
+            .collect();
 
 
+        let expected = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg\
+                        aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq\
+                        dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg\
+                        YnkK";
+
+        assert_eq!(base64_decode(expected), decrypted_string);
 
     }
 }
