@@ -38,8 +38,7 @@ mod test {
     use super::m_encrypt;
     use libs::aes_utils::{is_ecb,to_blocks};
     use libs::base64::base64_decode;
-    use libs::padding::pkcs7_unpad;
-
+    
     #[test]
     fn ch12() {
 
@@ -104,7 +103,7 @@ mod test {
                     break;
                 }
             }
-            if letter == 0 {
+            if letter == 1 {
                 break; //End of the unknown string
             }
 
@@ -121,21 +120,12 @@ mod test {
 
         }
 
-
-        //Filter out non-printable characters
-        let decrypted_string: Vec<u8> = unknown_decrypted_string.into_bytes()
-            .iter()
-            .filter(|x| (**x >= 0x20 && **x < 0xff) || (**x == 0x0a))
-            .map(|x| *x)
-            .collect();
-
-
         let expected = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg\
                         aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq\
                         dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg\
                         YnkK";
 
-        assert_eq!(base64_decode(expected), decrypted_string);
+        assert_eq!(base64_decode(expected), unknown_decrypted_string.into_bytes());
 
     }
 }
