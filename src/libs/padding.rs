@@ -9,7 +9,7 @@ pub fn pkcs7_unpad(data: &[u8], blocksize: usize) -> Result<Vec<u8>, &str> {
     let pad: u8 = unpadded[unpadded.len() - 1];
 
     if pad == 0 {
-        return Err("Zero padding found instead of PKCS7 padding.");
+        return Ok(unpadded); //Data isn't padded
     } else if pad as usize > blocksize {
         return Err("Incorrect amount of padding.");
     }
