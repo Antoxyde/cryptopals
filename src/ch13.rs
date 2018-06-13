@@ -33,10 +33,23 @@ impl Profile {
         let mut role = String::new();
 
         for i in 0..3 {
-            let (key, value) = splitted[i].split("&").collect();
+            let mut key_and_value = splitted[i].split("&").collect::<Vec<_>>();
+            assert_eq!(key_and_value.len(), 2);
 
-            if key == "email" {
-                email = value;
+            let k = key_and_value[0];
+            let v = key_and_value[1];
+
+            match k {
+                "email" => {
+                    email = String::from(v);
+                },
+                "uid" => {
+                    uid = v.parse::<u8>().unwrap();
+                },
+                "role" => {
+                    role =  String::from(v);
+                },
+                _ => panic!("Invalide key"),
             }
         }
 
@@ -44,7 +57,7 @@ impl Profile {
     }
 
     pub fn new_from_encrypted(data: &[u8]) -> Self {
-        let aes = AES::new(&key, OperationMode::ECB);
+        let mut aes = AES::new(&key, OperationMode::ECB);
 
         let decrypted = String::from_utf8(pkcs7_unpad(&aes.decrypt(&data), 16).expect("Invalid padding")).expect("Utf8 error");
 
@@ -52,7 +65,7 @@ impl Profile {
     }
 
     pub fn encrypt(&self) -> Vec<u8> {
-        let aes = AES::new(&key, OperationMode::ECB);
+        let mut aes = AES::new(&key, OperationMode::ECB);
         let data = format!("email={}&uid={}&role={}", self.email, self.uid, self.role);
         return pkcs7_pad(&aes.encrypt(&data.as_bytes()), 16);
     }

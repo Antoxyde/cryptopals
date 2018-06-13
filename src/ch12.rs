@@ -38,7 +38,7 @@ mod test {
     use super::m_encrypt;
     use libs::aes_utils::{is_ecb,to_blocks};
     use libs::base64::base64_decode;
-    
+
     #[test]
     fn ch12() {
 
