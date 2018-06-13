@@ -15,7 +15,7 @@ If you want to run only tests for challenges, type:
 and for a special challenge , add the number of the challenge at the end of the line (e.g. for challenge 1 : `cargo test ch1`)
 
 ## Todo :
-* Prefix tests function name with the set number (e.g. `set01_ch1()`) to run tests by set
+* Prefix test function names with the set number (e.g. `set01_ch1()`) to run tests by set
 
 ## Stage 1: Basics
 
