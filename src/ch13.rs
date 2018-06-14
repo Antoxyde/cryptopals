@@ -101,6 +101,14 @@ mod test {
         admin\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
         &uid=10000&role=
         osef
+
+        =>
+
+        email=padpapadpa
+        &uid=10000&role=
+        admin\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
+
+        I could also have used pkcs7_pad("admin", 16) to get a valid padding at the end
         */
 
         let malicious_email = String::from("padpapadpaadmin\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
@@ -111,7 +119,6 @@ mod test {
         let mut first_block =  [0u8; 16];
         let mut admin_block =  [0u8; 16];
         let mut second_block =  [0u8; 16];
-
 
         admin_block.copy_from_slice(&encrypted[16..32]);
         first_block.copy_from_slice(&encrypted[0..16]);
