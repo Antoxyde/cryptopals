@@ -116,27 +116,7 @@ mod test {
 
         let encrypted = profile.get_encrypted();
 
-        let mut first_block =  [0u8; 16];
-        let mut admin_block =  [0u8; 16];
-        let mut second_block =  [0u8; 16];
-
-        admin_block.copy_from_slice(&encrypted[16..32]);
-        first_block.copy_from_slice(&encrypted[0..16]);
-        second_block.copy_from_slice(&encrypted[32..48]);
-
-        let mut crafted: Vec<u8> = Vec::new();
-
-        for x in first_block.iter() {
-            crafted.push(*x);
-        }
-
-        for x in second_block.iter() {
-            crafted.push(*x);
-        }
-
-        for x in admin_block.iter() {
-            crafted.push(*x);
-        }
+        let crafted = vec![&encrypted[0..16], &encrypted[32..48], &encrypted[16..32]].concat();
 
         let admin_profile = Profile::new_from_encrypted(&crafted);
 

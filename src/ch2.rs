@@ -1,13 +1,6 @@
 /*
 Cryptoptals stage 1 challenge 2 solution
 https://www.cryptopals.com/sets/1/challenges/2
-
-Output :
-
-[antoxyde@anarchy-fixe:Projets/Cryptopals]$ rustc ch2.rs
-[antoxyde@anarchy-fixe:Projets/Cryptopals]$ ./ch2
-746865206b696420646f6e277420706c6179
-
 */
 #[cfg(test)]
 mod test {

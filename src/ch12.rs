@@ -2,6 +2,7 @@
 Cryptoptals stage 2 challenge 4 solution
 https://www.cryptopals.com/sets/2/challenges/4
 */
+
 use libs::base64::base64_decode;
 use libs::aes::{OperationMode, AES};
 
@@ -62,8 +63,6 @@ mod test {
         let blocks = to_blocks(&encrypted);
 
         assert!(is_ecb(&blocks));
-
-
 
         let mut unknown_decrypted_string = String::new();
 

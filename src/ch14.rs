@@ -8,9 +8,6 @@ use libs::aes::{OperationMode, AES};
 
 use libs::padding::pkcs7_pad;
 
-
-
-
 #[allow(dead_code)]
 fn m_encrypt(input: &[u8]) -> Vec<u8>  {
 
@@ -21,19 +18,26 @@ fn m_encrypt(input: &[u8]) -> Vec<u8>  {
                     dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg\
                     YnkK";
 
-    let mut data: Vec<u8> = prepend.clone().to_owned().to_vec();
-
-    //Todo use append/extend
-    for c in input {
-        data.push(*c);
-    }
-
-    for c in base64_decode(b64data) {
-        data.push(c);
-    }
-
+    let data = vec![prepend.to_vec(), input.to_vec(), base64_decode(b64data)].concat();
     let mut aes = AES::new(key, OperationMode::ECB);
     let padded_data = pkcs7_pad(&data, 16);
-
     return aes.encrypt(&padded_data);
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn ch14() {
+
+        let expected = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg\
+                        aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq\
+                        dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg\
+                        YnkK";
+
+        let zero_chunk = m_encrypt(&[0u8; 16]);
+        //ensuite c'est easy suffit de se caller sur un chunk et faire comme celui d'avant
+    }
 }
