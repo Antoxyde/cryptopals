@@ -35,3 +35,7 @@ pub fn hamming_distance(s1: String, s2: String) -> i32 {
     }
     total
 }
+
+pub fn quote_to_u8(data: &str) -> Vec<u8> {
+    data.replace(";", "%3B").replace("=", "%3D").into_bytes()
+}
