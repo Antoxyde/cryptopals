@@ -1,5 +1,5 @@
 /*
-Cryptoptals stage 1 challenge 6 solution
+Cryptoptals challenge 6 solution
 https://www.cryptopals.com/sets/1/challenges/6
 */
 

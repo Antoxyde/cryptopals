@@ -1,6 +1,6 @@
 /*
-Cryptoptals stage 2 challenge 4 solution
-https://www.cryptopals.com/sets/2/challenges/4
+Cryptoptals challenge 12 solution
+https://www.cryptopals.com/sets/2/challenges/12
 */
 
 use libs::base64::base64_decode;
@@ -66,12 +66,12 @@ mod test {
 
         let mut unknown_decrypted_string = String::new();
 
-        let size_guess_uknown_string = 144;
+        let size_guess_unknown_string = 144;
 
-        let mut data = vec![0; size_guess_uknown_string + block_size - 1];
+        let mut data = vec![0; size_guess_unknown_string + block_size - 1];
         let mut codebook_data = data.clone();
 
-        for _ in 0..size_guess_uknown_string {
+        for _ in 0..size_guess_unknown_string {
 
             //Rust does'nt support array with unfiex length at compile time so i'm forced to "hardcode" 16 here
             let mut codebook: Vec<[u8; 16]> = Vec::new();
@@ -82,17 +82,16 @@ mod test {
                 let mut plain = codebook_data.clone();
                 plain.push(c);
                 let encrypted = m_encrypt(&plain);
-                let mut block =  [0u8; 16]; //Same for this 16
-                block.copy_from_slice(&encrypted[size_guess_uknown_string..size_guess_uknown_string+block_size]);
+                let mut block =  [0u8; 16]; 
+                block.copy_from_slice(&encrypted[size_guess_unknown_string..size_guess_unknown_string+block_size]);
                 codebook.push(block);
             }
 
 
             let encrypted = m_encrypt(&data);
             println!("Encrypting {:?} {}", data, data.len());
-            let mut block =  [0u8; 16]; //Again :(
-            block.copy_from_slice(&encrypted[size_guess_uknown_string..size_guess_uknown_string+block_size]);
-
+            let mut block =  [0u8; 16]; 
+            block.copy_from_slice(&encrypted[size_guess_unknown_string..size_guess_unknown_string+block_size]);
             let mut letter = 0u8;
 
             for y in 0..126 as u8 {

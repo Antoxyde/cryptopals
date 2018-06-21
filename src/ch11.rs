@@ -1,6 +1,6 @@
 /*
-Cryptoptals stage 2 challenge 3 solution
-https://www.cryptopals.com/sets/2/challenges/3
+Cryptoptals challenge 11 solution
+https://www.cryptopals.com/sets/2/challenges/11
 */
 use libs::aes::{AES, OperationMode};
 use libs::aes_utils::gen_rnd_128_bits;

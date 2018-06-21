@@ -1,5 +1,5 @@
 /*
-Cryptoptals stage 1 challenge 4 solution
+Cryptoptals  challenge 4 solution
 https://www.cryptopals.com/sets/1/challenges/4
 */
 use libs::xor::crack_xor;

@@ -1,5 +1,5 @@
 /*
-Cryptoptals stage 1 challenge 1 solution
+Cryptoptals challenge 1 solution
 https://www.cryptopals.com/sets/1/challenges/1
 */
 #[cfg(test)]

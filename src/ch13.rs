@@ -1,6 +1,6 @@
 /*
-Cryptoptals stage 2 challenge 5 solution
-https://www.cryptopals.com/sets/2/challenges/5
+Cryptoptals challenge 13 solution
+https://www.cryptopals.com/sets/2/challenges/13
 */
 
 use libs::aes::{AES, OperationMode};
