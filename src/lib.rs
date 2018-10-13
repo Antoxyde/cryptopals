@@ -1,5 +1,6 @@
 extern crate rand;
-pub mod libs;
+extern crate cryptoctf;
+
 mod ch1;
 mod ch2;
 mod ch3;
@@ -16,3 +17,4 @@ mod ch13;
 mod ch14;
 mod ch15;
 mod ch16;
+mod ch17;

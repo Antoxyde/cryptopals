@@ -1,21 +1,11 @@
 # [Cryptopals challenges](https://www.cryptopals.com/)
 
-## Runing tests :
-
-To run all tests type:
-`cargo test`
-
-
-It include tests about base64 and aes (at the moment).
-
-If you want to run only tests for challenges, type:
-`cargo test ch`
-
-
-and for a special challenge , add the number of the challenge at the end of the line (e.g. for challenge 1 : `cargo test ch1`)
+## Tests
+I decided to organize the challenges by tests, so you can easily filter them using cargo.
+For example, type `cargo test set01` to run all the set01 challenges's test, or `cargo test ch1` to get only the challenge 1's test. 
 
 ## Todo :
-* Prefix test function names with the set number (e.g. `set01_ch1()`) to run tests by set
+- Nothing atm, just focusing on the next challenges :P
 
 ## Stage 1: Basics
 
@@ -35,9 +25,9 @@ and for a special challenge , add the number of the challenge at the end of the 
 - [x] 11. An ECB/CBC detection oracle
 - [x] 12. Byte-at-a-time ECB decryption (Simple)
 - [x] 13. ECB cut-and-paste
-- [ ] 14. Byte-at-a-time ECB decryption (Harder)
-- [ ] 15. PKCS#7 padding validation
-- [ ] 16. CBC bitflipping attacks
+- [x] 14. Byte-at-a-time ECB decryption (Harder)
+- [x] 15. PKCS#7 padding validation
+- [x] 16. CBC bitflipping attacks
 
 ## Stage 3: Block & Stream Crypto
 

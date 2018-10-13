@@ -3,9 +3,9 @@ Cryptoptals challenge 14 solution
 https://www.cryptopals.com/sets/2/challenges/14
 */
 
-use libs::aes::{OperationMode, AES};
+use cryptoctf::symmetric::aes::{OperationMode, AES};
 
-use libs::padding::pkcs7_pad;
+use cryptoctf::padding::pkcs7::pkcs7_pad;
 
 
 #[allow(dead_code)]
@@ -23,12 +23,12 @@ fn m_encrypt(prefix: &[u8], input: &[u8], suffix: &[u8]) -> Vec<u8>  {
 mod test {
 
     use super::*;
-    use libs::base64::base64_decode;
+    use cryptoctf::encodings::base64::base64_decode;
     use rand;
     use rand::{Rng, RngCore};
 
     #[test]
-    fn ch14() {
+    fn set02_ch14() {
 
         let mut rng = rand::thread_rng();
 
@@ -36,7 +36,7 @@ mod test {
                         aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq\
                         dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg\
                         YnkK");
-        
+
         let mut prefix = vec![0u8; rng.gen_range(0,16)];
         rng.fill_bytes(&mut prefix);
         let base_ct = m_encrypt(&prefix, &vec![], &suffix);

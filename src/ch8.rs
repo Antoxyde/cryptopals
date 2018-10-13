@@ -8,14 +8,15 @@ https://www.cryptopals.com/sets/1/challenges/8
 #[cfg(test)]
 mod test {
 
-    use libs::hex::hex_to_bytes;
-    use libs::aes_utils::{to_blocks, is_ecb};
+    use cryptoctf::utils::hex_to_bytes;
+    use cryptoctf::symmetric::aes_utils::to_blocks;
+    use cryptoctf::operation_modes::ecb::is_ecb;
 
     use std::fs::File;
     use std::io::prelude::*;
 
     #[test]
-    fn ch8() {
+    fn set01_ch8() {
 
 
         let mut file = File::open("resources/8.txt").expect("File 8.txt not found.");

@@ -10,12 +10,12 @@ mod test {
     use std::fs::File;
     use std::io::prelude::*;
 
-    use libs::base64::base64_decode;
-    use libs::others::{hamming_distance, m_split};
-    use libs::xor::{crack_xor_key, key_cycling_xor};
+    use cryptoctf::encodings::base64::base64_decode;
+    use cryptoctf::utils::{hamming_distance, m_split};
+    use cryptoctf::generic::xor::{crack_xor_key, key_cycling_xor};
 
     #[test]
-    fn ch6() {
+    fn set01_ch6() {
 
         assert_eq!(hamming_distance("this is a test".to_string(), "wokka wokka!!!".to_string()), 37);
 
@@ -67,7 +67,7 @@ mod test {
 
         for z in zipped {
             //crack each zip one by one (which correspond to each key char)
-            key.push(crack_xor_key(z.into_bytes()).unwrap())
+            key.push(crack_xor_key(&z.into_bytes()).unwrap())
         }
 
         let u_content = content.clone().into_bytes();

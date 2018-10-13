@@ -1,6 +1,6 @@
 use libs::others::count_letter_and_spaces;
 
-pub fn fixed_xor(s1: Vec<u8>, s2: Vec<u8>) -> Vec<u8> {
+pub fn fixed_xor(s1: &[u8], s2: &[u8]) -> Vec<u8> {
     assert_eq!(s1.len(), s2.len());
     let mut res = Vec::new();
 
@@ -21,7 +21,7 @@ pub fn single_byte_xor(bytes: &[u8], k: u8) -> Vec<u8> {
     xored
 }
 
-pub fn crack_xor(bytes_ct: Vec<u8>) -> Option<String> {
+pub fn crack_xor(bytes_ct: &[u8]) -> Option<String> {
     for i in 0..120 {
         let res = single_byte_xor(&bytes_ct, i);
 
@@ -34,7 +34,7 @@ pub fn crack_xor(bytes_ct: Vec<u8>) -> Option<String> {
     None
 }
 
-pub fn crack_xor_key(bytes_ct: Vec<u8>) -> Option<u8> {
+pub fn crack_xor_key(bytes_ct: &[u8]) -> Option<u8> {
     for i in 0..127 {
         let res = single_byte_xor(&bytes_ct, i);
 

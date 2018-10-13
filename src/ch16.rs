@@ -4,9 +4,9 @@ https://www.cryptopals.com/sets/2/challenges/16
 */
 
 
-use libs::aes::{OperationMode, AES};
-use libs::others::quote_to_u8;
-use libs::padding::{pkcs7_unpad, pkcs7_pad};
+use cryptoctf::symmetric::aes::{OperationMode, AES};
+use cryptoctf::utils::quote_to_u8;
+use cryptoctf::padding::pkcs7::{pkcs7_unpad, pkcs7_pad};
 
 #[allow(dead_code)]
 fn encrypt(data: &str) -> Vec<u8> {
@@ -35,10 +35,10 @@ fn decrypt_and_tell(data: &[u8]) -> bool {
 mod test {
 
     use super::*;
-    use libs::xor::fixed_xor;
+    use cryptoctf::generic::xor::fixed_xor;
 
     #[test]
-    fn ch16() {
+    fn set02_ch16() {
         let encrypted = encrypt("admin=true;");
         assert_eq!(decrypt_and_tell(&encrypted), false);
 
@@ -57,12 +57,11 @@ mod test {
         let pt3 = b"AAAAAAAAAAAAAAAA";
         let wanted = b"AAAAA;admin=true";
 
-        let dct3 = fixed_xor(ct2.to_vec(), pt3.to_vec());
-        let ctm2 = fixed_xor(dct3, wanted.to_vec());
+        let dct3 = fixed_xor(&ct2, pt3);
+        let ctm2 = fixed_xor(&dct3, wanted);
         let result = vec![&encrypted[0..16], &ctm2, &encrypted[32..encrypted.len()]].concat();
 
         assert_eq!(decrypt_and_tell(&result), true);
-
     }
-    
-}   
+
+}

@@ -2,14 +2,15 @@
 Cryptoptals challenge 5 solution
 https://www.cryptopals.com/sets/1/challenges/5
 */
+
 #[cfg(test)]
 mod test {
 
-    use libs::hex::bytes_to_hex;
-    use libs::xor::key_cycling_xor;
+    use cryptoctf::utils::bytes_to_hex;
+    use cryptoctf::generic::xor::key_cycling_xor;
 
     #[test]
-    fn ch5() {
+    fn set01_ch5() {
         let plain = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".as_bytes();
         let key = "ICE".as_bytes();
         let result = bytes_to_hex(&key_cycling_xor(&plain, &key));

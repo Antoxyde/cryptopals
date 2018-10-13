@@ -6,14 +6,14 @@ https://www.cryptopals.com/sets/2/challenges/10
 #[cfg(test)]
 mod test {
 
-    use libs::base64::base64_decode;
-    use libs::aes::{AES, OperationMode};
+    use cryptoctf::encodings::base64::base64_decode;
+    use cryptoctf::symmetric::aes::{AES, OperationMode};
 
     use std::fs::File;
     use std::io::prelude::*;
 
     #[test]
-    fn ch10() {
+    fn set02_ch10() {
         let key = "YELLOW SUBMARINE".as_bytes().to_owned();
         let mode = OperationMode::CBC {iv: [0u8; 16]};
         let mut aes = AES::new(&key, mode);

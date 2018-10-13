@@ -2,13 +2,13 @@
 Cryptoptals challenge 11 solution
 https://www.cryptopals.com/sets/2/challenges/11
 */
-use libs::aes::{AES, OperationMode};
-use libs::aes_utils::gen_rnd_128_bits;
+use cryptoctf::symmetric::aes::{AES, OperationMode};
+use cryptoctf::symmetric::aes_utils::gen_rnd_128_bits;
 
 use rand;
 use rand::Rng;
 
-use libs::padding::pkcs7_pad;
+use cryptoctf::padding::pkcs7::pkcs7_pad;
 
 #[allow(dead_code)]
 fn rnd_encrypt(input: &[u8]) -> (Vec<u8>,OperationMode)  {
@@ -50,11 +50,11 @@ mod test {
 
     use super::rnd_encrypt;
 
-    use libs::oracle::oracle_ecb_cbc;
-    use libs::aes::OperationMode;
+    use cryptoctf::operation_modes::oracle::oracle_ecb_cbc;
+    use cryptoctf::symmetric::aes::OperationMode;
 
     #[test]
-    fn ch11() {
+    fn set02_ch11() {
 
         let data = vec![0u8; 44];
 

@@ -2,13 +2,14 @@
 Cryptoptals  challenge 4 solution
 https://www.cryptopals.com/sets/1/challenges/4
 */
-use libs::xor::crack_xor;
-use libs::hex::hex_to_bytes;
+
+use cryptoctf::generic::xor::crack_xor;
+use cryptoctf::utils::hex_to_bytes;
 
 #[allow(dead_code)]
 fn crack(content: String) -> String {
     for try in content.split("\n") {
-        if let Some(res) = crack_xor(hex_to_bytes(try)) {
+        if let Some(res) = crack_xor(&hex_to_bytes(try)) {
             return res;
         }
     }
@@ -25,7 +26,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn ch4() {
+    fn set01_ch4() {
 
         let mut file = File::open("resources/4.txt").expect("File 4.txt not found.");
         let mut content = String::new();

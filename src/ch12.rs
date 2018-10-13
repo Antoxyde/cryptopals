@@ -3,10 +3,10 @@ Cryptoptals challenge 12 solution
 https://www.cryptopals.com/sets/2/challenges/12
 */
 
-use libs::base64::base64_decode;
-use libs::aes::{OperationMode, AES};
+use cryptoctf::encodings::base64::base64_decode;
+use cryptoctf::symmetric::aes::{OperationMode, AES};
 
-use libs::padding::pkcs7_pad;
+use cryptoctf::padding::pkcs7::pkcs7_pad;
 
 #[allow(dead_code)]
 fn m_encrypt(input: &[u8]) -> Vec<u8>  {
@@ -37,11 +37,12 @@ fn m_encrypt(input: &[u8]) -> Vec<u8>  {
 mod test {
 
     use super::m_encrypt;
-    use libs::aes_utils::{is_ecb,to_blocks};
-    use libs::base64::base64_decode;
+    use cryptoctf::symmetric::aes_utils::to_blocks;
+    use cryptoctf::operation_modes::ecb::is_ecb;
+    use cryptoctf::encodings::base64::base64_decode;
 
     #[test]
-    fn ch12() {
+    fn set02_ch12() {
 
         let mut data: Vec<u8> = Vec::new();
 

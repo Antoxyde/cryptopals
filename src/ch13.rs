@@ -3,8 +3,8 @@ Cryptoptals challenge 13 solution
 https://www.cryptopals.com/sets/2/challenges/13
 */
 
-use libs::aes::{AES, OperationMode};
-use libs::padding::{pkcs7_pad, pkcs7_unpad};
+use cryptoctf::symmetric::aes::{AES, OperationMode};
+use cryptoctf::padding::pkcs7::{pkcs7_pad, pkcs7_unpad};
 
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
@@ -88,7 +88,7 @@ mod test {
     use super::Profile;
 
     #[test]
-    fn ch13() {
+    fn set02_ch13() {
 
         let profile = Profile::new_from_string("email=foo@bar.com&uid=10&role=user");
         let encrypted = profile.get_encrypted();
