@@ -4,6 +4,11 @@
 I decided to organize the challenges by tests, so you can easily filter them using cargo.
 For example, type `cargo test set01` to run all the set01 challenges's test, or `cargo test ch1` to get only the challenge 1's test. 
 
+## Actual crypto code
+In doing these challenges, i decided to make my own ctf crypto lib, so most of the crypto code is not in this repo.
+You can find it here : https://git.antoxyde.fr/Antoxyde/cryptoctf
+This repo contains only the usage of the library to solve cryptopals challenges.
+
 ## Todo :
 - Nothing atm, just focusing on the next challenges :P
 
