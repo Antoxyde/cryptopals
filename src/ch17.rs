@@ -57,32 +57,28 @@ mod test {
         let encrypted = to_blocks(&get_encrypted());
         let mut total_decrypted = String::new();
 
+        let c = encrypted[0];
+        let c_1 = encrypted[1];
+        
+        /*
+        IV, C0, C1
+        C0 = E(P0 ^ IV)
+        C1 = E(P1 ^ C0)
 
-        for b in 0..encrypted.len() - 1 {
-            let c_i = encrypted[b];
-            let c_i1 = encrypted[b + 1];
+        P0 = D(C0) ^ IV
+        P1 = D(C1) ^ C0
 
-            let mut decrypted = vec![0u8; 16];
+        C = (C0 || C1)
+        
+        Pour être valide, si len(P) == 31, P_paddé[1] = 0x01
+        => donc on BF le dernier byte de 0 a 255 de C0
+        On envoie (C0' || C1) au serveur, 
+        Si le padding est ok, C0'[-1] ^ 0x01 = D(C1)[-1]
+        Sinon on continue
 
-            'outer: for j in 1..17 {
-                let pad = vec![vec![0u8; 16 - j], vec![j as u8; j]].concat();
-                let mut try = decrypted.clone();
-                'inner: for ch in 0..255 {
-                    try[16 - j] = ch;
-                    let payload = vec![fixed_xor(&fixed_xor(&c_i, &pad), &try), c_i1.to_vec()].concat();
-                    if oracle(&payload) {
-                        decrypted[16 - j] = ch as u8;
-                        println!("Pad: {:x?}\ntry: {:x?}\nPayload : {:x?}\n\n",pad,  try, payload);
-                        println!("New char : {}", ch as char);
-                        continue 'outer;
-                    }
-                }
-            }
-
-            total_decrypted.push_str(&String::from_utf8(decrypted).unwrap());
-        }
-
-        println!("Decrypted is {:?}", total_decrypted);
-
+        Ensuite pour le deuxième byte, il faut que P2[-1:-2] == 0x0202
+        Donc on forge C0
+        */
+        
     }
 }
