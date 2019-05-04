@@ -5,4 +5,4 @@ authors = ["Antoxyde <Antoxyde@protonmail.com>"]
 
 [dependencies]
 rand = "0.5"
-cryptoctf = { git = "https://git.antoxyde.fr/Antoxyde/cryptoctf" }
+cryptoctf = { path = "/home/antoxyde/Projets/cryptoctf/" }

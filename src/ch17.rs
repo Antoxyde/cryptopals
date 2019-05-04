@@ -30,8 +30,9 @@ fn get_encrypted() -> Vec<u8> {
     let key = "\x61\x2b\x12\x6c\x32\x39\x69\x4d\x48\x16\x64\x4e\x78\x54\x71\x47".as_bytes().to_owned();
     let iv = [16u8; 16];
     let mut aes = AES::new(&key, OperationMode::CBC{ iv : iv});
-
+    println!("Secret is {}", String::from_utf8(base64_decode(secrets[rnd])).unwrap());
     aes.encrypt(&pkcs7_pad(&base64_decode(secrets[rnd]), 16))
+
 }
 
 #[allow(dead_code)]
@@ -49,40 +50,42 @@ mod test {
     use cryptoctf::symmetric::aes_utils::to_blocks;
     use cryptoctf::generic::xor::fixed_xor;
 
+
+    fn crack_block(b1: &[u8], b2: &[u8]) -> Vec<u8> {
+        let mut decrypted = vec![0; 16];
+        'outer: for j in 1..17 {
+            let pad = vec![vec![0u8; 16 - j], vec![j as u8; j]].concat();
+            let mut try = decrypted.clone();
+            'inner: for ch in 0..255 {
+                try[16 - j] = ch;
+                let payload = vec![fixed_xor(&fixed_xor(&pad,&b1), &try), b2.to_vec()].concat();
+                if oracle(&payload) {
+                    decrypted[16 - j] = ch;
+                    continue 'outer;
+                }
+            }
+        }
+
+        return decrypted;
+    }
+
+
     #[test]
     fn set03_ch17() {
         assert_eq!(oracle_cbc_padding(&vec![16u8; 32]), true);
         assert_eq!(oracle_cbc_padding(&vec![17u8; 16]), false);
-
+     
+        let iv = [16u8; 16];
         let encrypted = to_blocks(&get_encrypted());
-        let mut total_decrypted = String::new();
 
 
-        for b in 0..encrypted.len() - 1 {
-            let c_i = encrypted[b];
-            let c_i1 = encrypted[b + 1];
-
-            let mut decrypted = vec![0u8; 16];
-
-            'outer: for j in 1..17 {
-                let pad = vec![vec![0u8; 16 - j], vec![j as u8; j]].concat();
-                let mut try = decrypted.clone();
-                'inner: for ch in 0..255 {
-                    try[16 - j] = ch;
-                    let payload = vec![fixed_xor(&fixed_xor(&c_i, &pad), &try), c_i1.to_vec()].concat();
-                    if oracle(&payload) {
-                        decrypted[16 - j] = ch as u8;
-                        println!("Pad: {:x?}\ntry: {:x?}\nPayload : {:x?}\n\n",pad,  try, payload);
-                        println!("New char : {}", ch as char);
-                        continue 'outer;
-                    }
-                }
+        for i in 0..encrypted.len() {
+            if i == 0 {
+                println!("Decrypted block : {:?}", String::from_utf8_lossy(&crack_block(&iv, &encrypted[i])));
+            } else {
+                println!("Decrypted block : {:?}", String::from_utf8_lossy(&crack_block(&encrypted[i-1], &encrypted[i])));
             }
-
-            total_decrypted.push_str(&String::from_utf8(decrypted).unwrap());
         }
-
-        println!("Decrypted is {:?}", total_decrypted);
 
     }
 }

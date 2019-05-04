@@ -37,7 +37,7 @@ impl Profile {
         let mut role = String::new();
 
         for i in 0..3 {
-            let mut key_and_value = splitted[i].split("=").collect::<Vec<_>>();
+            let key_and_value = splitted[i].split("=").collect::<Vec<_>>();
             assert_eq!(key_and_value.len(), 2);
 
             let k = key_and_value[0];
