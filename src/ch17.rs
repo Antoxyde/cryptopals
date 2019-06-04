@@ -77,7 +77,6 @@ mod test {
      
         let iv = [16u8; 16];
         let encrypted = to_blocks(&get_encrypted());
-<<<<<<< HEAD
 
 
         for i in 0..encrypted.len() {
@@ -88,32 +87,5 @@ mod test {
             }
         }
 
-=======
-        let mut total_decrypted = String::new();
-
-        let c = encrypted[0];
-        let c_1 = encrypted[1];
-        
-        /*
-        IV, C0, C1
-        C0 = E(P0 ^ IV)
-        C1 = E(P1 ^ C0)
-
-        P0 = D(C0) ^ IV
-        P1 = D(C1) ^ C0
-
-        C = (C0 || C1)
-        
-        Pour être valide, si len(P) == 31, P_paddé[1] = 0x01
-        => donc on BF le dernier byte de 0 a 255 de C0
-        On envoie (C0' || C1) au serveur, 
-        Si le padding est ok, C0'[-1] ^ 0x01 = D(C1)[-1]
-        Sinon on continue
-
-        Ensuite pour le deuxième byte, il faut que P2[-1:-2] == 0x0202
-        Donc on forge C0
-        */
-        
->>>>>>> 5fb2613428813fba5b226a14f57d6c5cdec97c2f
     }
 }

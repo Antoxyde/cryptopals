@@ -2,15 +2,12 @@
 
 ## Tests
 I decided to organize the challenges by tests, so you can easily filter them using cargo.
-For example, type `cargo test set01` to run all the set01 challenges's test, or `cargo test ch1` to get only the challenge 1's test. 
+For example, you can type `cargo test set01` to run all set01 challenges's tests, or `cargo test ch1` to run only challenge 1's test. 
 
 ## Actual crypto code
-In doing these challenges, i decided to make my own ctf crypto lib, so most of the crypto code is not in this repo.
+While doing these challenges, i decided to make my own ctf crypto library, so most of the crypto code is not in this repo.
 You can find it here : https://git.antoxyde.fr/Antoxyde/cryptoctf
-This repo contains only the usage of the library to solve cryptopals challenges.
-
-## Todo :
-- Nothing atm, just focusing on the next challenges :P
+This repo only contains the use of this library to solve cryptopals challenges.
 
 ## Stage 1: Basics
 
@@ -36,11 +33,11 @@ This repo contains only the usage of the library to solve cryptopals challenges.
 
 ## Stage 3: Block & Stream Crypto
 
-- [ ] 17. The CBC padding oracle
-- [ ] 18. Implement CTR, the stream cipher mode
+- [~] 17. The CBC padding oracle
+- [~] 18. Implement CTR, the stream cipher mode
 - [ ] 19. Break fixed-nonce CTR mode using substitions
 - [ ] 20. Break fixed-nonce CTR statistically
-- [ ] 21. Implement the MT19937 Mersenne Twister RNG
+- [x] 21. Implement the MT19937 Mersenne Twister RNG
 - [ ] 22. Crack an MT19937 seed
 - [ ] 23. Clone an MT19937 RNG from its output
 - [ ] 24. Create the MT19937 stream cipher and break it

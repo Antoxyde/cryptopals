@@ -3,15 +3,13 @@ Cryptoptals challenge 18 solution
 https://www.cryptopals.com/sets/3/challenges/18
 */
 
-use cryptoctf::symmetric::aes::{OperationMode, AES};
-use cryptoctf::encodings::base64::base64_decode;
 
 
 #[cfg(test)]
 mod test {
+    use cryptoctf::symmetric::aes::{OperationMode, AES};
+    use cryptoctf::encodings::base64::base64_decode;
 
-    use super::*;
-    
    #[test]
    fn set03_ch18() {
         let ciphertext = base64_decode("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==");
