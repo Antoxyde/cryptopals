@@ -1,9 +1,7 @@
 /*
-Cryptoptals challenge 20 solution
-https://www.cryptopals.com/sets/3/challenges/20
+Cryptoptals challenge 21 solution
+https://www.cryptopals.com/sets/3/challenges/21
 */
-
-
 
 #[cfg(test)]
 mod test {
@@ -11,7 +9,7 @@ mod test {
     use cryptoctf::rng::mt19937::MT19937;
 
     #[test]
-    fn set03ch21() {
+    fn set03_ch21() {
         let mut mt = MT19937::new(1u32);
         let res = vec![
             1791095845,
