@@ -1,0 +1,16 @@
+[package]
+name = "cryptoctf"
+version = "0.1.0"
+authors = ["Antoxyde <Antoxyde@protonmail.com>"]
+
+[lib]
+name = "cryptoctf"
+
+[dependencies]
+rand = "0.5"
+itertools = "0.7.8"
+num-traits = "0.2.8"
+num-bigint = "0.2.3"
+num-iter = "0.1.39"
+
+mathctf = { path = "../mathctf/" }

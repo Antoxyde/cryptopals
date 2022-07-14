@@ -1,0 +1,13 @@
+[package]
+name = "mathctf"
+version = "0.1.0"
+authors = ["Antoxyde <Antoxyde@protonmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-bigint = "0.2.3"
+num-traits = "0.2.8"
+num-integer = "0.1.41"
+bigdecimal = "0.1.0"
